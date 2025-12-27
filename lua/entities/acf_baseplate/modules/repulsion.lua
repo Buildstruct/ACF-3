@@ -52,6 +52,7 @@ hook.Add("Think", "ACF_Baseplate_Collision_Simulation", function()
 			local Valid2, Physics2, Pos2, Vel2, Contraption2, PhysMass2, TotalMass2, Radius2 = GetBaseplateProperties(BP2)
 
 			if not Valid1 or not Valid2 then continue end
+			if not Contraption1 or not Contraption2 then continue end
 			if Contraption1 == Contraption2 then continue end
 
 			if not ACF.DoesContraptionHavePlayers(Contraption1) or not ACF.DoesContraptionHavePlayers(Contraption2) then continue end
