@@ -7,6 +7,8 @@ ENT.ACF_KillableButIndestructible = true
 
 local ACF         = ACF
 local TraceLine   = util.TraceLine
+local Classes     = ACF.Classes
+
 
 function ENT.ACF_OnVerifyClientData(ClientData)
 	ClientData.AutoloaderSize = Vector(ClientData.AutoloaderLength / 43.233333587646 * 10, ClientData.AutoloaderCaliber / 7.2349619865417, ClientData.AutoloaderCaliber / 7.2349619865417) / 25.4
@@ -66,6 +68,30 @@ ACF.RegisterClassUnlink("acf_autoloader", "acf_gun", function(This, Gun)
 	return true, "Autoloader unlinked successfully."
 end)
 
+-- Arm to rack links (missile compatibility)
+ACF.RegisterClassPreLinkCheck("acf_autoloader", "acf_rack", function(This, Rack)
+	if IsValid(This:ACF_GetUserVar("Gun")) or Rack.Autoloader then return false, "Autoloader is already linked to that rack." end
+	return true
+end)
+
+ACF.RegisterClassLinkCheck("acf_autoloader", "acf_rack", function(This, Rack)
+	if Rack:GetPos():DistToSqr(This:GetPos()) > MaxDistance then return false, "This rack is too far from the autoloader." end
+	return true
+end)
+
+ACF.RegisterClassLink("acf_autoloader", "acf_rack", function(This, Rack)
+	This:ACF_SetUserVar("Gun", Rack)
+	Rack.Autoloader = This
+	return true, "Autoloader linked successfully."
+end)
+
+ACF.RegisterClassUnlink("acf_autoloader", "acf_rack", function(This, Rack)
+	if not IsValid(This:ACF_GetUserVar("Gun")) or not Rack.Autoloader then return false, "Autoloader was not linked to that rack." end
+	This:ACF_SetUserVar("Gun", nil)
+	Rack.Autoloader = nil
+	return true, "Autoloader unlinked successfully."
+end)
+
 -- Arm to ammo links
 ACF.RegisterClassPreLinkCheck("acf_autoloader", "acf_ammo", function(This, Ammo)
 	Ammo.Autoloaders = Ammo.Autoloaders or {}
@@ -79,8 +105,17 @@ ACF.RegisterClassLinkCheck("acf_autoloader", "acf_ammo", function(This, Ammo)
 	if Ammo:GetParent() ~= This:GetParent() then return false, "Autoloader and ammo must share the same parent" end
 
 	local BulletData = Ammo.BulletData
-	if BulletData and (BulletData.Caliber - 0.01) > This:ACF_GetUserVar("AutoloaderCaliber") / 10 then return false, "Ammo is too wide for this autoloader." end
-	if BulletData and (BulletData.ProjLength + BulletData.PropLength - 0.01) > This:ACF_GetUserVar("AutoloaderLength") then return false, "Ammo is too long for this autoloader." end
+	local Caliber = BulletData.Caliber
+	local Length = BulletData.ProjLength + BulletData.PropLength
+	if Ammo.IsMissileAmmo then
+		local Class    	= Classes.GetGroup(Classes.Missiles, BulletData.Id)
+		local Weapon    = Class and Class.Lookup[BulletData.Id]
+		local Round 	= Weapon and Weapon.Round
+		Length = Round.ActualLength * 2.54
+	end
+
+	if BulletData and (Caliber - 0.01) > This:ACF_GetUserVar("AutoloaderCaliber") / 10 then return false, "Ammo is too wide for this autoloader." end
+	if BulletData and (Length - 0.01) > This:ACF_GetUserVar("AutoloaderLength") then return false, "Ammo is too long for this autoloader." end
 	return true
 end)
 
@@ -105,8 +140,8 @@ function ENT:GetReloadEffAuto(Gun, Ammo)
 
 	local BreechPos = Gun:LocalToWorld(Gun.BreechPos)
 	local BreechAng = Gun:LocalToWorldAngles(Gun.BreechAng)
-	-- debugoverlay.Cross(BreechPos, 5, 5, Color(255, 0, 0), true)
-	-- debugoverlay.Cross(BreechPos + BreechAng:Forward() * 10, 5, 5, Color(255, 0, 0), true)
+	debugoverlay.Cross(BreechPos, 5, 5, Color(255, 0, 0), true)
+	debugoverlay.Cross(BreechPos + BreechAng:Forward() * 10, 5, 5, Color(255, 0, 0), true)
 
 	local AutoloaderPos = self:GetPos()
 	local AmmoPos = Ammo:GetPos()

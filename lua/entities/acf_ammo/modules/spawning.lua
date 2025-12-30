@@ -511,12 +511,19 @@ do -- Overlay
 		State:AddKeyValue("Ammo Type", AmmoType)
 		State:AddProgressBar("Contents", self.Amount, self.Capacity)
 
-		local Projectile = math.Round(self.BulletData.ProjMass, 2)
-		local Cartridge  = math.Round(self.BulletData.CartMass, 2)
+		local BulletData = self.BulletData
+		local Projectile = math.Round(BulletData.ProjMass, 2)
+		local Cartridge  = math.Round(BulletData.CartMass, 2)
 		State:AddHeader("Bullet Info", 2)
 
-		local Caliber = math.Round(self.BulletData.Caliber * 10, 2)
-		local Length  = math.Round(self.BulletData.ProjLength + self.BulletData.PropLength, 2)
+		local Caliber = math.Round(BulletData.Caliber * 10, 2)
+		local Length  = math.Round(BulletData.ProjLength + BulletData.PropLength, 2)
+		if self.IsMissileAmmo then
+			local Class    	= Classes.GetGroup(Classes.Missiles, BulletData.Id)
+			local Weapon    = Class and Class.Lookup[BulletData.Id]
+			local Round 	= Weapon and Weapon.Round
+			Length = Round.ActualLength * 2.54
+		end
 		State:AddKeyValue("Shell dimensions", Caliber .. "mm x " .. Length .. "cm")
 
 		local IdealReloadTime = math.Round(ACF.CalcReloadTime(Caliber, self.Class, self.Weapon, self.BulletData, self.Override), 2)
