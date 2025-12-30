@@ -46,7 +46,7 @@ local MaxDistance = ACF.LinkDistance * ACF.LinkDistance
 
 -- Arm to gun links
 ACF.RegisterClassPreLinkCheck("acf_autoloader", "acf_gun", function(This, Gun)
-	if IsValid(This:ACF_GetUserVar("Gun")) or Gun.Autoloader then return false, "Autoloader is already linked to that gun." end
+	if IsValid(This.Gun) or Gun.Autoloader then return false, "Autoloader is already linked to that gun." end
 	return true
 end)
 
@@ -56,21 +56,21 @@ ACF.RegisterClassLinkCheck("acf_autoloader", "acf_gun", function(This, Gun)
 end)
 
 ACF.RegisterClassLink("acf_autoloader", "acf_gun", function(This, Gun)
-	This:ACF_SetUserVar("Gun", Gun)
+	This.Gun = Gun
 	Gun.Autoloader = This
 	return true, "Autoloader linked successfully."
 end)
 
 ACF.RegisterClassUnlink("acf_autoloader", "acf_gun", function(This, Gun)
-	if not IsValid(This:ACF_GetUserVar("Gun")) or not Gun.Autoloader then return false, "Autoloader was not linked to that gun." end
-	This:ACF_SetUserVar("Gun", nil)
+	if not IsValid(This.Gun) or not Gun.Autoloader then return false, "Autoloader was not linked to that gun." end
+	This.Gun = nil
 	Gun.Autoloader = nil
 	return true, "Autoloader unlinked successfully."
 end)
 
 -- Arm to rack links (missile compatibility)
 ACF.RegisterClassPreLinkCheck("acf_autoloader", "acf_rack", function(This, Rack)
-	if IsValid(This:ACF_GetUserVar("Gun")) or Rack.Autoloader then return false, "Autoloader is already linked to that rack." end
+	if IsValid(This.Gun) or Rack.Autoloader then return false, "Autoloader is already linked to that rack." end
 	return true
 end)
 
@@ -80,14 +80,14 @@ ACF.RegisterClassLinkCheck("acf_autoloader", "acf_rack", function(This, Rack)
 end)
 
 ACF.RegisterClassLink("acf_autoloader", "acf_rack", function(This, Rack)
-	This:ACF_SetUserVar("Gun", Rack)
+	This.Gun = Rack
 	Rack.Autoloader = This
 	return true, "Autoloader linked successfully."
 end)
 
 ACF.RegisterClassUnlink("acf_autoloader", "acf_rack", function(This, Rack)
-	if not IsValid(This:ACF_GetUserVar("Gun")) or not Rack.Autoloader then return false, "Autoloader was not linked to that rack." end
-	This:ACF_SetUserVar("Gun", nil)
+	if not IsValid(This.Gun) or not Rack.Autoloader then return false, "Autoloader was not linked to that rack." end
+	This.Gun = nil
 	Rack.Autoloader = nil
 	return true, "Autoloader unlinked successfully."
 end)
@@ -95,7 +95,7 @@ end)
 -- Arm to ammo links
 ACF.RegisterClassPreLinkCheck("acf_autoloader", "acf_ammo", function(This, Ammo)
 	Ammo.Autoloaders = Ammo.Autoloaders or {}
-	if This:ACF_GetUserVar("AmmoCrates")[Ammo] or Ammo.Autoloaders[This] then return false, "Autoloader is already linked to that ammo." end
+	if This.AmmoCrates[Ammo] or Ammo.Autoloaders[This] then return false, "Autoloader is already linked to that ammo." end
 
 	return true
 end)
@@ -120,15 +120,15 @@ ACF.RegisterClassLinkCheck("acf_autoloader", "acf_ammo", function(This, Ammo)
 end)
 
 ACF.RegisterClassLink("acf_autoloader", "acf_ammo", function(This, Ammo)
-	This:ACF_GetUserVar("AmmoCrates")[Ammo] = true
+	This.AmmoCrates[Ammo] = true
 	Ammo.Autoloaders[This] = true
 	return true, "Autoloader linked successfully."
 end)
 
 ACF.RegisterClassUnlink("acf_autoloader", "acf_ammo", function(This, Ammo)
 	Ammo.Autoloaders = Ammo.Autoloaders or {}
-	if not This:ACF_GetUserVar("AmmoCrates")[Ammo] or not Ammo.Autoloaders[This] then return false, "Autoloader was not linked to that ammo." end -- TODO: refactor when link API is refactored
-	This:ACF_GetUserVar("AmmoCrates")[Ammo] = nil
+	if not This.AmmoCrates[Ammo] or not Ammo.Autoloaders[This] then return false, "Autoloader was not linked to that ammo." end -- TODO: refactor when link API is refactored
+	This.AmmoCrates[Ammo] = nil
 	Ammo.Autoloaders[This] = nil
 	return true, "Autoloader unlinked successfully."
 end)
@@ -236,6 +236,50 @@ function ENT:ACF_UpdateOverlayState(State)
 	State:AddNumber("Mass (kg)", math.Round(self:GetPhysicsObject():GetMass(), 2))
 	State:AddNumber("Reload (s)", math.Round(self.EstimatedReload or 0, 4))
 	State:AddNumber("Mag Reload (s)", math.Round(self.EstimatedReloadMag or 0, 4))
+end
+
+-- Adv Dupe 2 Related
+do
+	-- Hopefully we can improve this when the codebase is refactored.
+	function ENT:PreEntityCopy()
+		if IsValid(self.Gun) then
+			duplicator.StoreEntityModifier(self, "ACFGun", {self.Gun:EntIndex()})
+		end
+
+		if next(self.AmmoCrates) then
+			local Entities = {}
+			for Ent in pairs(self.AmmoCrates) do Entities[#Entities + 1] = Ent:EntIndex() end
+			duplicator.StoreEntityModifier(self, "ACFAmmoCrates", Entities)
+		end
+
+		-- Wire dupe info
+		self.BaseClass.PreEntityCopy(self)
+	end
+
+	function ENT:PostEntityPaste(Player, Ent, CreatedEntities)
+		local EntMods = Ent.EntityMods
+		if EntMods and EntMods.ACFGun then
+			local Gun = CreatedEntities[EntMods.ACFGun[1]]
+			if IsValid(Gun) then self:Link(Gun) end
+		end
+
+		if EntMods and EntMods.ACFAmmoCrates then
+			for _, EntIndex in ipairs(EntMods.ACFAmmoCrates) do
+				local Ammo = CreatedEntities[EntIndex]
+				if IsValid(Ammo) then self:Link(Ammo) end
+			end
+		end
+
+		--Wire dupe info
+		self.BaseClass.PostEntityPaste(self, Player, Ent, CreatedEntities)
+	end
+
+	function ENT:OnRemove()
+		HookRun("ACF_OnEntityLast", "acf_autoloader", self)
+		if IsValid(self.Gun) then self:Unlink(self.Gun) end
+		for v, _ in pairs(self.AmmoCrates) do self:Unlink(v) end
+		WireLib.Remove(self)
+	end
 end
 
 ACF.Classes.Entities.Register()
