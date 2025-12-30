@@ -210,8 +210,8 @@ function ENT:ACF_Activate(Recalc)
 end
 
 function ENT:Think()
-	local Gun = self:ACF_GetUserVar("Gun")
-	local AmmoCrate = next(self:ACF_GetUserVar("AmmoCrates"))
+	local Gun = self.Gun
+	local AmmoCrate = next(self.AmmoCrates)
 	if Gun and AmmoCrate and IsValid(Gun) and IsValid(AmmoCrate) then
 		self.EstimatedEfficiency = self:GetReloadEffAuto(Gun, AmmoCrate, true)
 		self.EstimatedReload = ACF.CalcReloadTime(Gun.Caliber, Gun.ClassData, Gun.WeaponData, AmmoCrate.BulletData, Gun) / self.EstimatedEfficiency
