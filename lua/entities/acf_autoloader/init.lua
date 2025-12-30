@@ -147,7 +147,10 @@ function ENT:GetReloadEffAuto(Gun, Ammo)
 	local AmmoPos = Ammo:GetPos()
 
 	-- TODO: maybe check position too later?
-	local GunArmAngle = math.deg(math.acos(self:GetForward():Dot(BreechAng:Forward())))
+	local DiffNorm = (BreechPos - AutoloaderPos):GetNormalized()
+	local GunDiffAngle = math.deg(math.acos(DiffNorm:Dot(BreechAng:Forward())))
+	local ALDiffAngle = math.deg(math.acos(DiffNorm:Dot(self:GetForward())))
+	local GunArmAngle = GunDiffAngle + ALDiffAngle
 	local GunArmAngleAligned = GunArmAngle < ACF.AutoloaderMaxAngleDiff
 	self.OverlayWarnings.GunArmAlignment = not GunArmAngleAligned and "Autoloader is not aligned\nWith the breech of: " .. (tostring(Gun) or "<INVALID ENTITY???>") .. "\nDeviation: " .. math.Round(GunArmAngle, 2) .. ", Acceptable: " .. ACF.AutoloaderMaxAngleDiff or nil
 	self:UpdateOverlay()
