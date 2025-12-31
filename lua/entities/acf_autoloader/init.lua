@@ -157,10 +157,11 @@ function ENT:GetReloadEffAuto(Gun, Ammo)
 	self:UpdateOverlay()
 	if not GunArmAngleAligned then return 0.000001 end
 
+	TraceConfig.filter = function(x) return not (x == self or x == Gun or x == Ammo or x == self:GetParent() or x.noradius or x:GetOwner() ~= self:GetOwner() or x:IsPlayer() or ACF.GlobalFilter[x:GetClass()]) end
+
 	-- Check LOS from arm to breech is unobstructed
 	TraceConfig.start = AutoloaderPos
 	TraceConfig.endpos = BreechPos
-	TraceConfig.filter = {self, Gun, Ammo}
 	local TraceResult = TraceLine(TraceConfig)
 	self.OverlayErrors.ArmBreechLOS = TraceResult.Hit and "Autoloader cannot see the breech\nOf: " .. (tostring(Gun) or "<INVALID ENTITY???>") .. "\nBlocked by " .. (tostring(TraceResult.Entity) or "<INVALID ENTITY???>") or nil
 	self:UpdateOverlay()
@@ -169,7 +170,6 @@ function ENT:GetReloadEffAuto(Gun, Ammo)
 	-- Check LOS from arm to ammo is unobstructed
 	TraceConfig.start = AutoloaderPos
 	TraceConfig.endpos = AmmoPos
-	TraceConfig.filter = {self, Gun, Ammo}
 	TraceResult = TraceLine(TraceConfig)
 	self.OverlayErrors.ArmAmmoLOS = TraceResult.Hit and "Autoloader cannot see the ammo\nOf: " .. (tostring(Ammo) or "<INVALID ENTITY???>") .. "\nBlocked by " .. (tostring(TraceResult.Entity) or "<INVALID ENTITY???>") or nil
 	self:UpdateOverlay()
