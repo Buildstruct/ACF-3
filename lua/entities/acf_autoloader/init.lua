@@ -8,6 +8,7 @@ ENT.ACF_KillableButIndestructible = true
 local ACF         = ACF
 local TraceLine   = util.TraceLine
 local Classes     = ACF.Classes
+local HookRun     = hook.Run
 
 
 function ENT.ACF_OnVerifyClientData(ClientData)
