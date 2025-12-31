@@ -175,10 +175,7 @@ do -- Random timer crew stuff
 			for K, V in pairs(Rotator:GetChildren()) do
 				local Child = isnumber(K) and V or K
 				if not IsValid(Child) then continue end
-
-				if Child.IsACFEntity then
-					Filter[Child] = true
-				end
+				Filter[Child] = true
 			end
 
 			self.RotationFilter = Filter
