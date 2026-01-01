@@ -17,21 +17,26 @@ end
 -- Other entities are fair game though
 -- The Player argument is to prevent a case where you could grief other peoples contraptions
 
+local function DisableEntity(Player, Entity, Reason)
+    if IsValid(Entity) and ENTITY.CPPICanTool(Entity, Player, "") and Entity.IsACFEntity and not Entity.IsACFCrew then
+        DisableEntity(Entity, "Invalid usercall on " .. tostring(Entity) .. "", Reason, 10)
+    end
+end
+
+
 local function DisableFamily(Player, Ent, Reason)
+    DisableEntity(Player, Ent, Reason)
     for Entity in pairs(ENTITY.GetFamilyChildren(Ent)) do
-        if IsValid(Entity) and ENTITY.CPPIGetOwner(Entity) == Player and Entity.IsACFEntity and not Entity.IsACFCrew then
-            DisableEntity(Entity, "Invalid usercall on " .. tostring(Ent) .. "", Reason, 10)
-        end
+        DisableEntity(Player, Entity, Reason)
     end
 
     return false
 end
 
 local function DisableContraption(Player, Ent, Reason)
+    DisableEntity(Player, Ent, Reason)
     for Entity in pairs(ENTITY.GetContraption(Ent).ents) do
-        if IsValid(Entity) and ENTITY.CPPIGetOwner(Entity) == Player and Entity.IsACFEntity and not Entity.IsACFCrew then
-            DisableEntity(Entity, "Invalid usercall on " .. tostring(Ent) .. "", Reason, 10)
-        end
+        DisableEntity(Player, Entity, Reason)
     end
 
     return false
