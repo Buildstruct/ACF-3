@@ -12,8 +12,6 @@ ENT.IsACFAutoloader = true
 ENT.ACF_UserVars = {
     ["AutoloaderCaliber"] = {Type = "Number", Min = ACF.MinAutoloaderCaliber, Max = ACF.MaxAutoloaderCaliber, Default = 1, Decimals = 2},
     ["AutoloaderLength"] = {Type = "Number", Min = ACF.MinAutoloaderLength, Max = ACF.MaxAutoloaderLength, Default = 1, Decimals = 2},
-    ["Gun"] = {Type = "LinkedEntity", Classes = {acf_gun = true}},
-    ["AmmoCrates"] = {Type = "LinkedEntities", Classes = {acf_ammo = true}},
 }
 
 cleanup.Register("acf_autoloader")

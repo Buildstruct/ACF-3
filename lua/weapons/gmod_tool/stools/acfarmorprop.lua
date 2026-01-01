@@ -61,7 +61,10 @@ local function UpdateArmor(_, Entity, Data, BecauseOfDupe)
 	local Area      = Entity.ACF.Area
 	local Ductility = math.Clamp(Data.Ductility or 0, ACF.MinDuctility, ACF.MaxDuctility)
 
-	UpdateValues(Entity, Data, PhysObj, Area, Ductility)
+	-- Physical clipping seems to take some time to apply after spawning, so avoid applying armor before that.
+	timer.Simple(0.11, function()
+		UpdateValues(Entity, Data, PhysObj, Area, Ductility)
+	end)
 
 	duplicator.ClearEntityModifier(Entity, "ACF_Armor")
 	duplicator.StoreEntityModifier(Entity, "ACF_Armor", { Thickness = Data.Thickness, Ductility = Ductility })
@@ -313,6 +316,7 @@ else -- Serverside-only stuff
 		self.AimEntity = Ent
 	end
 
+	-- Entry point for duplicator to apply armor settings
 	duplicator.RegisterEntityModifier("ACF_Armor", function(_, Entity, Data)
 		if Entity.IsPrimitive then return end
 		UpdateArmor(_, Entity, Data, true)
@@ -331,6 +335,7 @@ else -- Serverside-only stuff
 		end
 	end)
 
+	-- Backwards compatibility with deprecated system
 	duplicator.RegisterEntityModifier("acfsettings", function(_, Entity, Data)
 		if CLIENT then return end
 		if not ACF.Check(Entity, true) then return end

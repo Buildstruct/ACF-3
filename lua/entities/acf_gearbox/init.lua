@@ -930,9 +930,10 @@ do -- Movement -----------------------------------------
 						end
 					end
 
-					Link.ReqTq = (InputRPM * Multiplier - RPM) * InputInertia * Clutch
-
-					TotalReqTq = TotalReqTq + abs(Link.ReqTq)
+					if abs(InputRPM * Multiplier) > abs(RPM) then -- removing this check causes the wheels to constantly invert their rotation
+						Link.ReqTq = (InputRPM * Multiplier - RPM) * InputInertia * Clutch
+						TotalReqTq = TotalReqTq + abs(Link.ReqTq)
+					end
 				end
 			end
 		end
