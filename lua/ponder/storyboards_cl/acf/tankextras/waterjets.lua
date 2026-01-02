@@ -20,10 +20,9 @@ Chapter:AddDelay(Chapter:AddInstruction("PlaceModels", {
     }
 }))
 
-
-
 local Chapter = Storyboard:Chapter("Parenting & Linking")
 Chapter:AddInstruction("ShowToolgun", {Tool = language.GetPhrase("tool.multi_parent.listname")}):DelayByLength()
+Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "Make sure your water jet is underwater to function properly."}))
 Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "Parent all the parts of your vehicle to the baseplate using the Multi-Parent tool."}))
 
 local Chapter = Storyboard:Chapter("Parenting Usage")
@@ -66,17 +65,6 @@ Chapter:AddInstruction("ShowToolgun", {Tool = language.GetPhrase("tool.acf_menu.
 
 Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "The ACF Menu tool can link ACF entities to other entities."}))
 
-Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "Right click the engine and right click the gearbox to link them together."}))
-
-Chapter:AddDelay(Chapter:AddInstruction("ACF Menu", {
-    Children = {"Engine"},
-    Target = "Gearbox",
-    Easing = math.ease.InOutQuad,
-    Length = 2,
-}))
-
-Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "Now the gearbox can receive power from the engine."}))
-
 Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "Hold shift + right click on each fuel tank (multi select) and then right click the engine to link them together."}))
 
 Chapter:AddDelay(Chapter:AddInstruction("ACF Menu", {
@@ -88,9 +76,28 @@ Chapter:AddDelay(Chapter:AddInstruction("ACF Menu", {
 
 Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "Now the engine can receive fuel from the fuel tanks."}))
 
+Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "Right click the engine and right click the gearbox to link them together."}))
+
+Chapter:AddDelay(Chapter:AddInstruction("ACF Menu", {
+    Children = {"Engine"},
+    Target = "Gearbox",
+    Easing = math.ease.InOutQuad,
+    Length = 2,
+}))
+
+Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "Now the gearbox can receive power from the engine."}))
+
+Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "Right click the gearbox and right click the water jet to link them together."}))
+
+Chapter:AddDelay(Chapter:AddInstruction("ACF Menu", {
+    Children = {"Gearbox"},
+    Target = "Water Jet",
+    Easing = math.ease.InOutQuad,
+    Length = 2,
+}))
+
 local Chapter = Storyboard:Chapter("Yaw Control")
 
 Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "Your water jet now propells you forward. To make it turn your vehicle wire the Yaw input on your water jet to a value between -1 and 1. "}))
 
 Chapter:AddInstruction("HideToolgun", {}):DelayByLength()
-Chapter:RecommendStoryboard("acf.tankbasics.suspension")
