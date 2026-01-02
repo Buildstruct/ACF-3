@@ -62,9 +62,8 @@ local function UpdateArmor(_, Entity, Data, BecauseOfDupe)
 	local Ductility = math.Clamp(Data.Ductility or 0, ACF.MinDuctility, ACF.MaxDuctility)
 
 	-- Physical clipping seems to take some time to apply after spawning, so avoid applying armor before that.
-	timer.Simple(0.11, function()
-		UpdateValues(Entity, Data, PhysObj, Area, Ductility)
-	end)
+	UpdateValues(Entity, Data, PhysObj, Area, Ductility)
+
 
 	duplicator.ClearEntityModifier(Entity, "ACF_Armor")
 	duplicator.StoreEntityModifier(Entity, "ACF_Armor", { Thickness = Data.Thickness, Ductility = Ductility })
@@ -316,10 +315,20 @@ else -- Serverside-only stuff
 		self.AimEntity = Ent
 	end
 
+	hook.Add("ProperClippingClipAdded", "ACF_ArmorTool_PostClip", function(ClippedEntity, _)
+		timer.Simple(engine.TickInterval(), function()
+			UpdateArmor(_, ClippedEntity, ClippedEntity.EntityMods.ACF_Armor)
+		end)
+	end)
+
 	-- Entry point for duplicator to apply armor settings
 	duplicator.RegisterEntityModifier("ACF_Armor", function(_, Entity, Data)
 		if Entity.IsPrimitive then return end
-		UpdateArmor(_, Entity, Data, true)
+		local EntMods = Entity.EntityMods
+		local ClipMod = EntMods and EntMods.proper_clipping
+		if not ClipMod then
+			UpdateArmor(_, Entity, Data, true)
+		end
 	end)
 
 	-- Specifically handling Primitives separately so that we can ensure that their stats are not impacted by a race condition
