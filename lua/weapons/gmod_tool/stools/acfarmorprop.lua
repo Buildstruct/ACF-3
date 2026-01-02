@@ -315,6 +315,7 @@ else -- Serverside-only stuff
 		self.AimEntity = Ent
 	end
 
+	-- Handle physical clips by applying armor after the physical clip is applied
 	hook.Add("ProperClippingClipAdded", "ACF_ArmorTool_PostClip", function(ClippedEntity, _)
 		timer.Simple(engine.TickInterval(), function()
 			UpdateArmor(_, ClippedEntity, ClippedEntity.EntityMods.ACF_Armor)
@@ -324,11 +325,11 @@ else -- Serverside-only stuff
 	-- Entry point for duplicator to apply armor settings
 	duplicator.RegisterEntityModifier("ACF_Armor", function(_, Entity, Data)
 		if Entity.IsPrimitive then return end
+
+		-- Only apply armor if the entity is not being clipped physically (happens in above hook)
 		local EntMods = Entity.EntityMods
 		local ClipMod = EntMods and EntMods.proper_clipping
-		if not ClipMod then
-			UpdateArmor(_, Entity, Data, true)
-		end
+		if not ClipMod then	UpdateArmor(_, Entity, Data, true) end
 	end)
 
 	-- Specifically handling Primitives separately so that we can ensure that their stats are not impacted by a race condition
