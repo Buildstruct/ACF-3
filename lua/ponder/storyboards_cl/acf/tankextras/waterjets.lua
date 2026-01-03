@@ -56,6 +56,6 @@ Chapter:AddDelay(Chapter:AddInstruction("ACF Menu", {
 
 local Chapter = Storyboard:Chapter("Yaw Control")
 
-Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "Your water jet now propells you forward. To make it turn your vehicle wire the Yaw input on your water jet to a value between -1 and 1. "}))
+Chapter:AddDelay(Chapter:AddInstruction("Caption", {Text = "Your water jet now propels you forward. To make it turn your vehicle wire the Yaw input on your water jet to a value between -1 and 1. "}))
 
 Chapter:AddInstruction("HideToolgun", {}):DelayByLength()
