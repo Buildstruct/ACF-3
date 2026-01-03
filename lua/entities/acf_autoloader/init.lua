@@ -187,6 +187,8 @@ function ENT:GetReloadEffAuto(Gun, Ammo)
 	local VerticalScore = ACF.Normalize(math.abs(GunMoveOffset.z) + math.abs(AmmoMoveOffset.z), ACF.AutoloaderWorstDistVertical, ACF.AutoloaderBestDistVertical)
 	local AngularScore = ACF.Normalize(AmmoAngleDiff, ACF.AutoloaderWorstDistAngular, ACF.AutoloaderBestDistAngular)
 
+	if AngularScore <= 0 then self.OverlayWarnings.AngularScore = "Autoloader or ammo are probably backwards or greatly misaligned." end
+
 	local HealthScore = self.ACF.Health / self.ACF.MaxHealth
 	return 2 * HorizontalScore * VerticalScore * AngularScore * HealthScore
 end
