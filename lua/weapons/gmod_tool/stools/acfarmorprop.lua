@@ -526,9 +526,9 @@ do -- Armor readout
 
 				local Contraption_ = Trace.Entity:GetContraption()
 				if Contraption_ then
-					return ACF.CostSystem.CalcCostsFromContraption(Contraption_)
+					return Contraption.CostSystem.CalcCostsFromContraption(Contraption_)
 				else
-					return ACF.CostSystem.CalcCostsFromEnts({Trace.Entity})
+					return Contraption.CostSystem.CalcCostsFromEnts({Trace.Entity})
 				end
 			end
 		},
@@ -543,7 +543,7 @@ do -- Armor readout
 			end,
 			GetCost = function(Tool, Trace)
 				local Ents = ents.FindInSphere(Trace.HitPos, Tool:GetClientNumber("sphere_radius"))
-				return ACF.CostSystem.CalcCostsFromEnts(Ents)
+				return Contraption.CostSystem.CalcCostsFromEnts(Ents)
 			end
 		}
 	}
@@ -571,10 +571,22 @@ do -- Armor readout
 		local Cost, Breakdown = Mode.GetCost(self, Trace)
 		if UseCostBreakdown then
 			local Player = self:GetOwner()
-			Messages.SendChat(Player, nil, "--- Contraption Cost Breakdown ---")
-			for Item, ItemCost in pairs(Breakdown) do
-				Messages.SendChat(Player, nil, "| " .. Item .. ": " .. math.Round(ItemCost, 2))
+
+			local NiceBreakdown = {}
+			for item, cost in pairs(Breakdown) do
+				table.insert(NiceBreakdown, {name = item, cost = cost})
 			end
+
+			table.sort(NiceBreakdown, function(a, b)
+				return a.cost > b.cost
+			end)
+
+			Messages.SendChat(Player, nil, "--- Contraption Cost Breakdown ---")
+
+			for _, Item in ipairs(NiceBreakdown) do
+				Messages.SendChat(Player, nil, "| " .. Item.name .. ": " .. math.Round(Item.cost, 2))
+			end
+
 			Messages.SendChat(Player, nil, "TOTAL COST: ", math.Round(Cost, 2))
 		else
 			local Power, Fuel, PhysNum, ParNum, ConNum, Name, OtherNum, Total, PhysTotal = Mode.GetResult(self, Trace)
