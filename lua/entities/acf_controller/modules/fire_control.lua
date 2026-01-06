@@ -111,9 +111,9 @@ do
 				if Turret == BreechReference and ShouldLevel then
 					Turret:InputDirection(ReloadAngle)
 				elseif Turret == BreechReference and ShouldElevate then
-					Turret:InputDirection(HitPos + self.Additive)
+					Turret:InputDirection(HitPos + SelfTbl.Additive)
 				else
-					Turret:InputDirection(HitPos + self.Additive)
+					Turret:InputDirection(HitPos + SelfTbl.Additive)
 				end
 			end
 		end

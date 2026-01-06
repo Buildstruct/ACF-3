@@ -333,6 +333,15 @@ end
 local function OnButtonChanged(Controller, Button, Down)
 	if not IsFirstTimePredicted() then return end
 	if Button == MOUSE_MIDDLE and Down and IsValid(Controller.TurretComputer) then
+		-- Reset computer lase
+		if Controller.Driver:KeyDown( IN_DUCK ) then
+			Controller.Additive = vector_origin
+			Controller.LaseDist = 0
+			Controller.LasePitch = 0
+			return
+		end
+
+		-- Otherwise log metrics on lase, and use these later
 		Controller.TurretComputer.Inputs.Position.Value = Controller.HitPos
 		Controller.TurretComputer:TriggerInput("Calculate Superelevation", 1)
 
