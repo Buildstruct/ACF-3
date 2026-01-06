@@ -79,22 +79,22 @@ do
 	-- Aim turrets
 	function ENT:ProcessTurrets(SelfTbl, HitPos)
 		local Turrets = SelfTbl.Turrets
-
+		if not IsValid(SelfTbl.Baseplate) then return end -- Needed for velocity
 		if SelfTbl.TurretLocked then return end
 
 		local Primary = self.Primary
 		local BreechReference = IsValid(Primary) and Primary.BreechReference
 		local ReloadAngle = self:GetReloadAngle()
 		local ShouldLevel = ReloadAngle ~= 0 and IsValid(Primary) and Primary.State ~= "Loaded"
-		local ShouldElevate = IsValid(self.TurretComputer)
 
 		-- Liddul... if you can hear me...
 		local TurretComputer = self.TurretComputer
-		local SuperElevation
+		local SuperElevation = nil
+		local TravelTime = 0
 		if TurretComputer  then
 			if TurretComputer.Computer == "DIR-BalComp" then SuperElevation = TurretComputer.Outputs.Elevation.Value
-			elseif TurretComputer.Computer == "IND-BalComp" then SuperElevation = TurretComputer.Outputs.Angle[1]
-			end
+			elseif TurretComputer.Computer == "IND-BalComp" then SuperElevation = TurretComputer.Outputs.Angle[1] end
+			TravelTime = TurretComputer.Outputs["Flight Time"].Value
 		end
 
 		if SuperElevation ~= nil and SuperElevation ~= SelfTbl.LastSuperElevation then
@@ -105,16 +105,12 @@ do
 		SelfTbl.LastSuperElevation = SuperElevation
 
 		SelfTbl.Additive = SelfTbl.Additive or vector_origin
+		local AntiDrift = -self.Baseplate:GetVelocity() * TravelTime
 
 		for Turret, _ in pairs(Turrets) do
 			if IsValid(Turret) then
-				if Turret == BreechReference and ShouldLevel then
-					Turret:InputDirection(ReloadAngle)
-				elseif Turret == BreechReference and ShouldElevate then
-					Turret:InputDirection(HitPos + SelfTbl.Additive)
-				else
-					Turret:InputDirection(HitPos + SelfTbl.Additive)
-				end
+				if Turret == BreechReference and ShouldLevel then Turret:InputDirection(ReloadAngle)
+				else Turret:InputDirection(HitPos + SelfTbl.Additive + AntiDrift) end
 			end
 		end
 	end
