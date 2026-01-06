@@ -673,14 +673,6 @@ hook.Add("cfw.contraption.entityAdded", "ACF_Engine_ContraptionChecks", function
 		Contraption.HasEngines   = true
 		Contraption.TotalEngines = (Contraption.TotalEngines or 0) + 1
 	end
-
-	if Contraption.Engines then
-		for Engine in pairs(Contraption.Engines) do
-			if not IsValid(Engine) then continue end
-
-			ACF.CheckLegal(Engine)
-		end
-	end
 end)
 
 hook.Add("cfw.contraption.entityRemoved", "ACF_Engine_ContraptionChecks", function(Contraption, Ent)
@@ -691,14 +683,6 @@ hook.Add("cfw.contraption.entityRemoved", "ACF_Engine_ContraptionChecks", functi
 
 		Contraption.HasEngines   = next(Contraption.Engines) and true or nil
 		Contraption.TotalEngines = Contraption.HasEngines and 0 or table.Count(Contraption.Engines)
-	end
-
-	if Contraption.Engines then
-		for Engine in pairs(Contraption.Engines) do
-			if not IsValid(Engine) then continue end
-
-			ACF.CheckLegal(Engine)
-		end
 	end
 end)
 

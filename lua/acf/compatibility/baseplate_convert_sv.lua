@@ -50,7 +50,16 @@ function ACF.ConvertEntityToBaseplate(Player, Target)
     local BoxSize = AMa - AMi
 
     -- Duplicate the entire thing
-    local Entities, Constraints = AdvDupe2.duplicator.Copy(Player, Target, {}, {}, vector_origin)
+    local EntsByIndex = {}
+    if Target.GetContraption then
+        -- Save everything including turrets through contraption data
+        for ent, _ in pairs(Target:GetContraption().ents) do EntsByIndex[ent:EntIndex()] = ent end
+    else
+        -- Otherwise, just the baseplate entity
+        EntsByIndex[Target:EntIndex()] = Target
+    end
+
+    local Entities, Constraints = AdvDupe2.duplicator.AreaCopy(Player, EntsByIndex, vector_origin, false)
 
     -- Find the baseplate
     local Baseplate = Entities[Target:EntIndex()]
@@ -63,6 +72,7 @@ function ACF.ConvertEntityToBaseplate(Player, Target)
     Baseplate.ACF_UserData.Length = w
     Baseplate.ACF_UserData.Width = l
     Baseplate.ACF_UserData.Thickness = t
+    Baseplate.ACF_UserData.DisableAltE = false
     Baseplate.PhysicsObjects[0].Angle = Baseplate.PhysicsObjects[0].Angle + foundTranslation.addAngles
 
     -- Swap width/thickness if necessary
