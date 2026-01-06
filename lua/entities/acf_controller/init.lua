@@ -338,6 +338,8 @@ local function OnButtonChanged(Controller, Button, Down)
 			Controller.Additive = vector_origin
 			Controller.LaseDist = 0
 			Controller.LasePitch = 0
+			Controller.Drop = 0
+			Controller.TravelTime = 0
 			return
 		end
 

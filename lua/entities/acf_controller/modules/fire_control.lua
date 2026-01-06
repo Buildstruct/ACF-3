@@ -90,27 +90,23 @@ do
 		-- Liddul... if you can hear me...
 		local TurretComputer = self.TurretComputer
 		local SuperElevation = nil
-		local TravelTime = 0
 		if TurretComputer  then
 			if TurretComputer.Computer == "DIR-BalComp" then SuperElevation = TurretComputer.Outputs.Elevation.Value
 			elseif TurretComputer.Computer == "IND-BalComp" then SuperElevation = TurretComputer.Outputs.Angle[1] end
-			TravelTime = TurretComputer.Outputs["Flight Time"].Value
 		end
 
 		if SuperElevation ~= nil and SuperElevation ~= SelfTbl.LastSuperElevation then
 			local TrueSuperElevation = SuperElevation - (SelfTbl.LasePitch or 0) -- Compute pitch offset to account for drop
-			local CounterDrop = (SelfTbl.LaseDist or 0) * math.tan(math.rad(-TrueSuperElevation)) -- Compute vector offset to account for drop
-			SelfTbl.Additive = Vector(0, 0, CounterDrop)
+			SelfTbl.Drop = (SelfTbl.LaseDist or 0) * math.tan(math.rad(-TrueSuperElevation)) -- Compute vector offset to account for drop
+			SelfTbl.TravelTime = SelfTbl.LaseDist ~= 0 and TurretComputer.Outputs["Flight Time"].Value or 0
 		end
-		SelfTbl.LastSuperElevation = SuperElevation
-
-		SelfTbl.Additive = SelfTbl.Additive or vector_origin
-		local AntiDrift = -self.Baseplate:GetVelocity() * TravelTime
+		local AntiDrop = Vector(0, 0, SelfTbl.Drop or 0)
+		local AntiDrift = -self.Baseplate:GetVelocity() * (SelfTbl.TravelTime or 0)
 
 		for Turret, _ in pairs(Turrets) do
 			if IsValid(Turret) then
 				if Turret == BreechReference and ShouldLevel then Turret:InputDirection(ReloadAngle)
-				else Turret:InputDirection(HitPos + SelfTbl.Additive + AntiDrift) end
+				else Turret:InputDirection(HitPos + AntiDrop + AntiDrift) end
 			end
 		end
 	end
