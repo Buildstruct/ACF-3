@@ -98,10 +98,11 @@ function ACF.ConvertEntityToBaseplate(Player, Target)
         end
     end
 
-    undo.Create("acf_baseplate")
-    undo.AddEntity(NewBaseplate)
-    undo.SetPlayer(Player)
-    undo.Finish()
+    -- Note: It does not make sense to undo just the ACF baseplate. This breaks CFW's constraint tracking.
+    -- undo.Create("acf_baseplate")
+    -- undo.AddEntity(NewBaseplate)
+    -- undo.SetPlayer(Player)
+    -- undo.Finish()
 
     if foundTranslation.warning then
         ACF.SendNotify(Player, false, foundTranslation.warning)
