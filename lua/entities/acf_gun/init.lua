@@ -722,12 +722,10 @@ do -- Metamethods --------------------------------
 			if not IsValid(Ref) then return end
 			if Ref:GetClass() == "acf_turret_rotator" then Ref = NewParent.Turret end
 
-			local MuzzlePos = self:GetAttachment(1).Pos
-			local Length = (self:OBBMaxs().x - self:OBBMins().x)
-			local BreechPos = MuzzlePos - self:GetForward() * Length
+			local WorldBreechPos = self:LocalToWorld(self.BreechPos)
 			self.BreechReference = Ref
-			self.BreechLocalToRef = Ref:WorldToLocal(BreechPos)	-- Local Reference position of breech
-			self.BreechLocalToGun = self:WorldToLocal(BreechPos)	-- Local Current position of breech
+			self.BreechLocalToRef = Ref:WorldToLocal(WorldBreechPos)	-- Local Reference position of breech
+			self.BreechLocalToGun = self:WorldToLocal(WorldBreechPos)	-- Local Current position of breech
 		end
 
 		-- Logging contraption wide bullet filter

@@ -141,8 +141,8 @@ function ENT:GetReloadEffAuto(Gun, Ammo)
 
 	local BreechPos = Gun:LocalToWorld(Gun.BreechPos)
 	local BreechAng = Gun:LocalToWorldAngles(Gun.BreechAng)
-	debugoverlay.Cross(BreechPos, 5, 5, Color(255, 0, 0), true)
-	debugoverlay.Cross(BreechPos + BreechAng:Forward() * 10, 5, 5, Color(255, 0, 0), true)
+	-- debugoverlay.Cross(BreechPos, 5, 5, Color(255, 0, 0), true)
+	-- debugoverlay.Cross(BreechPos + BreechAng:Forward() * 10, 5, 5, Color(255, 0, 0), true)
 
 	local AutoloaderPos = self:GetPos()
 	local AmmoPos = Ammo:GetPos()
