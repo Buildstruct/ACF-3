@@ -10,9 +10,8 @@ local TraceLine   = util.TraceLine
 local Classes     = ACF.Classes
 local HookRun     = hook.Run
 
-
 function ENT.ACF_OnVerifyClientData(ClientData)
-	ClientData.AutoloaderSize = Vector(ClientData.AutoloaderLength / 43.233333587646 * 10, ClientData.AutoloaderCaliber / 7.2349619865417, ClientData.AutoloaderCaliber / 7.2349619865417) / 25.4
+	ClientData.AutoloaderSize = Vector(ClientData.AutoloaderLength / 43.233333587646 * 10, ClientData.AutoloaderCaliber / 7.2349619865417, ClientData.AutoloaderCaliber / 7.2349619865417) / ACF.InchToMm
 end
 
 function ENT:ACF_PreSpawn()
@@ -103,7 +102,7 @@ end)
 
 ACF.RegisterClassLinkCheck("acf_autoloader", "acf_ammo", function(This, Ammo)
 	if Ammo:GetPos():DistToSqr(This:GetPos()) > MaxDistance then return false, "This crate is too far from the autoloader." end
-	if Ammo:GetParent() ~= This:GetParent() then return false, "Autoloader and ammo must share the same parent" end
+	if not ACF.AllowArbitraryParents and Ammo:GetParent() ~= This:GetParent() then return false, "Autoloader and ammo must share the same parent." end
 
 	local BulletData = Ammo.BulletData
 	local Caliber = BulletData.Caliber
@@ -236,7 +235,6 @@ function ENT:ACF_UpdateOverlayState(State)
 	end
 	State:AddNumber("Max Shell Caliber (mm)", self:ACF_GetUserVar("AutoloaderCaliber"))
 	State:AddNumber("Max Shell Length (cm)", self:ACF_GetUserVar("AutoloaderLength"))
-	State:AddNumber("Mass (kg)", math.Round(self:GetPhysicsObject():GetMass(), 2))
 	State:AddNumber("Reload (s)", math.Round(self.EstimatedReload or 0, 4))
 	State:AddNumber("Mag Reload (s)", math.Round(self.EstimatedReloadMag or 0, 4))
 end
