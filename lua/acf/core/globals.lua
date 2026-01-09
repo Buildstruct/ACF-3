@@ -361,7 +361,7 @@ do -- ACF global vars
 	ACF.LoaderWorstDist 	= 300	-- Distance after which loaders are least effective
 	ACF.LoaderMaxBonus 		= 2		-- Maximum bonus loaders can give to reload time
 
-	ACF.MinAutoloaderCaliber = 100	-- Minimum caliber for autoloaders
+	ACF.MinAutoloaderCaliber = 60	-- Minimum caliber for autoloaders
 	ACF.MaxAutoloaderCaliber = 280	-- Maximum caliber for autoloaders
 	ACF.MinAutoloaderLength = 50	-- Minimum shell length for autoloaders (mm)
 	ACF.MaxAutoloaderLength = 200	-- Maximum shell length for autoloaders (cm)
