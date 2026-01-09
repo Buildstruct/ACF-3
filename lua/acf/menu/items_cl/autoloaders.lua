@@ -11,6 +11,9 @@ Components.RegisterItem("AL-IMP", "AL", {
 	Description = "An automatic ammunition loading system.",
 	Model       = "models/acf/autoloader_tractorbeam.mdl",
 	CreateMenu = function(_, Menu)
+		ACF.SetClientData("PrimaryClass", "acf_autoloader")
+		ACF.SetClientData("SecondaryClass", "N/A")
+
 		local MassLabel = Menu:AddLabel("")
 		local AutoloaderSize = Vector(0, 0, 0)
 
@@ -22,7 +25,7 @@ Components.RegisterItem("AL-IMP", "AL", {
 			MassLabel:SetText(string.format("Mass : %s", ACF.GetProperMass(Volume * 250)))
 		end
 
-		local CaliberSlider = Menu:AddSlider("Size", ACF.MinAutoloaderCaliber, ACF.MaxAutoloaderCaliber, 2)
+		local CaliberSlider = Menu:AddSlider("Max Caliber (mm)", ACF.MinAutoloaderCaliber, ACF.MaxAutoloaderCaliber, 2)
 		CaliberSlider:SetClientData("AutoloaderCaliber", "OnValueChanged")
 		CaliberSlider:DefineSetter(function(Panel, _, _, Value)
 			local Size = math.Round(Value)
@@ -37,7 +40,7 @@ Components.RegisterItem("AL-IMP", "AL", {
 			return Size
 		end)
 
-		local LengthSlider = Menu:AddSlider("Length", ACF.MinAutoloaderLength, ACF.MaxAutoloaderLength, 2)
+		local LengthSlider = Menu:AddSlider("Length (cm)", ACF.MinAutoloaderLength, ACF.MaxAutoloaderLength, 2)
 		LengthSlider:SetClientData("AutoloaderLength", "OnValueChanged")
 		LengthSlider:DefineSetter(function(Panel, _, _, Value)
 			local Length = math.Round(Value)

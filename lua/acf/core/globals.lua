@@ -180,6 +180,7 @@ do -- ACF global vars
 	ACF.LinkDistance         = 650 -- Maximum distance, in inches, at which components will remain linked with each other
 	ACF.KillIconColor        = Color(200, 200, 48)
 	ACF.NetMessageSizeLimit  = 13	-- Maximum size of a net message in bytes (IF SET TOO LOW, CERTAIN MODELS MAY NOT BE NETWORKED PROPERLY)
+	ACF.FilterMakeSpherical  = true -- Whether Make Spherical entities should be filtered out of ballistics traces. Not intended to be disabled in actual gameplay
 
 	-- Unit Conversion
 	ACF.MeterToInch          = 39.3701 -- Meters to inches
@@ -313,6 +314,7 @@ do -- ACF global vars
 		acf_groundloader = true,
 		acf_supply = true,
 		acf_waterjet = true,
+		acf_autoloader = true,
 		prop_physics = true,
 		prop_vehicle_prisoner_pod = true
 	}
@@ -359,9 +361,9 @@ do -- ACF global vars
 	ACF.LoaderWorstDist 	= 300	-- Distance after which loaders are least effective
 	ACF.LoaderMaxBonus 		= 2		-- Maximum bonus loaders can give to reload time
 
-	ACF.MinAutoloaderCaliber = 20	-- Minimum caliber for autoloaders
+	ACF.MinAutoloaderCaliber = 100	-- Minimum caliber for autoloaders
 	ACF.MaxAutoloaderCaliber = 280	-- Maximum caliber for autoloaders
-	ACF.MinAutoloaderLength = 1	-- Minimum shell length for autoloaders (mm)
+	ACF.MinAutoloaderLength = 50	-- Minimum shell length for autoloaders (mm)
 	ACF.MaxAutoloaderLength = 200	-- Maximum shell length for autoloaders (cm)
 	ACF.AutoloaderMaxAngleDiff = 1 -- Maximum deviation between autoloader and breech to be aligned (deg)
 

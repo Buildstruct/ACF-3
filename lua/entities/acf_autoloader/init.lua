@@ -111,7 +111,7 @@ ACF.RegisterClassLinkCheck("acf_autoloader", "acf_ammo", function(This, Ammo)
 		local Class    	= Classes.GetGroup(Classes.Missiles, BulletData.Id)
 		local Weapon    = Class and Class.Lookup[BulletData.Id]
 		local Round 	= Weapon and Weapon.Round
-		Length = Round.ActualLength * 2.54
+		Length = Round.ActualLength * ACF.InchToCm
 	end
 
 	if BulletData and (Caliber - 0.01) > This:ACF_GetUserVar("AutoloaderCaliber") / 10 then return false, "Ammo is too wide for this autoloader." end
@@ -211,15 +211,30 @@ function ENT:ACF_Activate(Recalc)
 	self.ACF.Type		= "Prop"
 end
 
+function ENT:GetCost()
+	local AutoloaderSize = self:GetScale()
+
+	local R, H = AutoloaderSize.y, AutoloaderSize.x
+	local Volume = math.pi * R * R * H
+
+	return Volume * 2
+end
+
 function ENT:Think()
 	local Gun = self.Gun
 	local AmmoCrate = next(self.AmmoCrates)
-	if Gun and AmmoCrate and IsValid(Gun) and IsValid(AmmoCrate) then
+	local LinkedToGun = Gun and IsValid(Gun)
+	local LinkedToCrate = AmmoCrate and IsValid(AmmoCrate)
+
+	if LinkedToGun and LinkedToCrate then
 		self.EstimatedEfficiency = self:GetReloadEffAuto(Gun, AmmoCrate, true)
 		self.EstimatedReload = ACF.CalcReloadTime(Gun.Caliber, Gun.ClassData, Gun.WeaponData, AmmoCrate.BulletData, Gun) / self.EstimatedEfficiency
 		self.EstimatedReloadMag = ACF.CalcReloadTimeMag(Gun.Caliber, Gun.ClassData, Gun.WeaponData, AmmoCrate.BulletData, Gun) / self.EstimatedEfficiency
-		self:UpdateOverlay()
 	end
+
+	self.OverlayErrors.LinkedToGun = not LinkedToGun and "Not linked to a weapon!" or nil
+	self.OverlayErrors.LinkedToCrate = not LinkedToCrate and "Not linked to an ammo crate!" or nil
+	self:UpdateOverlay()
 
 	self:NextThink(CurTime() + 5)
 
@@ -235,8 +250,8 @@ function ENT:ACF_UpdateOverlayState(State)
 	end
 	State:AddNumber("Max Shell Caliber (mm)", self:ACF_GetUserVar("AutoloaderCaliber"))
 	State:AddNumber("Max Shell Length (cm)", self:ACF_GetUserVar("AutoloaderLength"))
-	State:AddNumber("Reload (s)", math.Round(self.EstimatedReload or 0, 4))
-	State:AddNumber("Mag Reload (s)", math.Round(self.EstimatedReloadMag or 0, 4))
+	State:AddNumber("Estimated Reload (s)", math.Round(self.EstimatedReload or 0, 4))
+	State:AddNumber("Estimated Magazine Reload (s)", math.Round(self.EstimatedReloadMag or 0, 4))
 end
 
 -- Adv Dupe 2 Related

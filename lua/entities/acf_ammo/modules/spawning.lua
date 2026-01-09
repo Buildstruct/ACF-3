@@ -522,7 +522,7 @@ do -- Overlay
 			local Class    	= Classes.GetGroup(Classes.Missiles, BulletData.Id)
 			local Weapon    = Class and Class.Lookup[BulletData.Id]
 			local Round 	= Weapon and Weapon.Round
-			Length = Round.ActualLength * 2.54
+			Length = Round.ActualLength * ACF.InchToCm
 		end
 		State:AddKeyValue("Shell dimensions", Caliber .. "mm x " .. Length .. "cm")
 
