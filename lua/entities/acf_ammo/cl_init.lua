@@ -53,6 +53,14 @@ net.Receive( "ACF_RequestAmmoData", function()
 	entity.AmmoStage        = net.ReadUInt( 5 )
 	entity.IsBelted         = net.ReadBool()
 
+	-- Read drum-specific data
+	entity.IsDrum = net.ReadBool()
+
+	if entity.IsDrum then
+		entity.RoundsPerRing = net.ReadUInt( 8 )
+		entity.DrumLayers    = net.ReadUInt( 8 )
+	end
+
 	local hasCustomModel = net.ReadBool()
 
 	if hasCustomModel then
@@ -60,10 +68,15 @@ net.Receive( "ACF_RequestAmmoData", function()
 		entity.RoundOffset = net.ReadVector()
 	end
 
-	-- Determine model path
+	-- Determine model path (unified for all crate types)
 	local modelPath = entity.RoundModel
 
 	if not modelPath then
+		-- Debug: use cylinder model for visualization
+		-- TODO: Revert to proper ammo model selection after debugging
+		modelPath = "models/holograms/cylinder.mdl"
+
+		--[[
 		modelPath = "models/munitions/round_100mm.mdl"
 
 		if entity.BulletData and entity.BulletData.Type then
@@ -72,6 +85,7 @@ net.Receive( "ACF_RequestAmmoData", function()
 				modelPath = ammoType.Model
 			end
 		end
+		--]]
 	end
 
 	-- Calculate model scale
@@ -103,7 +117,6 @@ net.Receive( "ACF_RequestAmmoData", function()
 	-- Cache calculated data for model creation
 	entity.CachedModelPath     = modelPath
 	entity.CachedLocalAngle    = localAngle
-	entity.CachedDefaultOffset = not hasCustomModel and Vector( entity.RoundSize.x * 0.5, 0, 0 ) or nil
 
 	-- Cache model scale matrix
 	local scaleMatrix = Matrix()
@@ -111,22 +124,36 @@ net.Receive( "ACF_RequestAmmoData", function()
 	entity.CachedScaleMatrix = scaleMatrix
 
 	-- Cache model offset
+	-- For center-origin models (like cylinder.mdl), no offset is needed
+	-- For base-origin models, offset by -roundLength/2 to center
 	local modelOffset = Vector( 0, 0, 0 )
+
+	-- Debug: cylinder.mdl has center origin, so no offset needed
+	-- TODO: Restore offset logic when reverting to proper ammo models
+	--[[
+	entity.CachedDefaultOffset = not hasCustomModel and Vector( entity.RoundSize.x * 0.5, 0, 0 ) or nil
 	if hasCustomModel and entity.RoundOffset then
 		modelOffset = entity.RoundOffset
 	elseif entity.CachedDefaultOffset then
 		modelOffset = -entity.CachedDefaultOffset
 	end
+	--]]
 
 	entity.CachedModelOffset = modelOffset
 
-	-- Cache crate start position
-	local crateDimensions = ACF.GetCrateDimensions( entity.ProjectileCounts, entity.RoundSize )
-	entity.CachedLocalStartPos = Vector(
-		-crateDimensions.x * 0.5 + entity.RoundSize.x * 0.5,
-		-crateDimensions.y * 0.5 + entity.RoundSize.y * 0.5,
-		-crateDimensions.z * 0.5 + entity.RoundSize.z * 0.5
-	)
+	-- Cache crate start position (different for drums vs boxes)
+	if entity.IsDrum then
+		-- For drums, rounds are positioned radially - no start position offset needed
+		-- The drum center is at origin, rounds are positioned by GetDrumRoundOffset
+		entity.CachedLocalStartPos = Vector( 0, 0, 0 )
+	else
+		local crateDimensions = ACF.GetCrateDimensions( entity.ProjectileCounts, entity.RoundSize )
+		entity.CachedLocalStartPos = Vector(
+			-crateDimensions.x * 0.5 + entity.RoundSize.x * 0.5,
+			-crateDimensions.y * 0.5 + entity.RoundSize.y * 0.5,
+			-crateDimensions.z * 0.5 + entity.RoundSize.z * 0.5
+		)
+	end
 
 	-- Clear existing models since data changed
 	if entity._RoundModels then
@@ -225,39 +252,72 @@ do -- Ammo overlay rendering
 		local modelPath     = self.CachedModelPath
 		local localAngle    = self.CachedLocalAngle
 		local roundSize     = self.RoundSize
-		local fits          = self.ProjectileCounts
 		local scaleMatrix   = self.CachedScaleMatrix
 		local modelOffset   = self.CachedModelOffset
-		local localStartPos = self.CachedLocalStartPos
-
-		-- WorldAngle must be recalculated as entity orientation can change
-		local worldAngle = self:LocalToWorldAngles( localAngle )
 
 		local models = self._RoundModels
-		local index = 1
 
-		for x = 1, fits.x do
-			for y = 1, fits.y do
-				for z = 1, fits.z do
-					-- Only create models we don't have yet
-					if index > previous and index <= count then
-						local localGridPos  = getRoundOffset( x, y, z, roundSize, fits )
-						local localModelPos = localStartPos + localGridPos + modelOffset
+		-- Handle drum vs box positioning
+		if self.IsDrum then
+			-- Drum: radial positioning with rounds pointing toward center
+			local roundsPerRing = self.RoundsPerRing
+			local numLayers     = self.DrumLayers
 
-						local model = ClientsideModel( modelPath, RENDERGROUP_OPAQUE )
-						if IsValid( model ) then
-							model:SetParent( self )
-							model:SetPos( self:LocalToWorld( localModelPos ) )
-							model:SetAngles( worldAngle )
-							model:SetNoDraw( true )
-							model:DrawShadow( false )
-							model:EnableMatrix( "RenderMultiply", scaleMatrix )
-							models[index] = model
+			for index = previous + 1, count do
+				local localPos, localAng = ACF.GetDrumRoundOffset( index, roundsPerRing, numLayers, roundSize )
+
+				-- Compose angles: localAngle orients the model, localAng.yaw rotates around drum axis
+				local drumAngle = Angle( localAngle )
+				drumAngle:RotateAroundAxis( Vector( 0, 0, 1 ), localAng.yaw )
+
+				-- GetDrumRoundOffset already positions for center-origin models
+				-- (positionRadius = baseRadius - roundLength/2)
+				-- No additional modelOffset needed for drums
+
+				local model = ClientsideModel( modelPath, RENDERGROUP_OPAQUE )
+				if IsValid( model ) then
+					model:SetParent( self )
+					model:SetPos( self:LocalToWorld( localPos ) )
+					model:SetAngles( self:LocalToWorldAngles( drumAngle ) )
+					model:SetNoDraw( true )
+					model:DrawShadow( false )
+					model:EnableMatrix( "RenderMultiply", scaleMatrix )
+					models[index] = model
+				end
+			end
+		else
+			-- Box: grid positioning
+			local fits          = self.ProjectileCounts
+			local localStartPos = self.CachedLocalStartPos
+
+			-- WorldAngle must be recalculated as entity orientation can change
+			local worldAngle = self:LocalToWorldAngles( localAngle )
+
+			local index = 1
+
+			for x = 1, fits.x do
+				for y = 1, fits.y do
+					for z = 1, fits.z do
+						-- Only create models we don't have yet
+						if index > previous and index <= count then
+							local localGridPos  = getRoundOffset( x, y, z, roundSize, fits )
+							local localModelPos = localStartPos + localGridPos + modelOffset
+
+							local model = ClientsideModel( modelPath, RENDERGROUP_OPAQUE )
+							if IsValid( model ) then
+								model:SetParent( self )
+								model:SetPos( self:LocalToWorld( localModelPos ) )
+								model:SetAngles( worldAngle )
+								model:SetNoDraw( true )
+								model:DrawShadow( false )
+								model:EnableMatrix( "RenderMultiply", scaleMatrix )
+								models[index] = model
+							end
 						end
-					end
 
-					index = index + 1
-					if index > count then return end
+						index = index + 1
+						if index > count then return end
+					end
 				end
 			end
 		end

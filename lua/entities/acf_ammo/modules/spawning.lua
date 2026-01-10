@@ -113,27 +113,52 @@ do -- Spawn/Update/Remove
 		-- Convert current tool data once to get projectile geometry
 		local Bullet = Ammo:ServerConvert(Data)
 
-		-- Normalize requested projectile counts (accept nil, coerce to integers >= 1)
-		local cx = tonumber(Data.CrateProjectilesX)
-		local cy = tonumber(Data.CrateProjectilesY)
-		local cz = tonumber(Data.CrateProjectilesZ)
+		-- Check if this is an ammo drum (cylinder shape)
+		local IsDrum = Data.AmmoShape == "Cylinder"
 
-		if not (cx and cy and cz) then
-			cx, cy, cz = ACF.GetProjectileCountsFromCrateSize(Data.Size, Class, Data, Bullet)
+		if IsDrum then
+			local roundSize = ACF.GetRoundProperties(Class, Data, Bullet)
+			local minRounds = ACF.GetMinRoundsPerRing()
+			local maxRounds = ACF.GetMaxRoundsPerRing(roundSize, ACF.AmmoMaxWidth)
+			local maxLayers = ACF.GetMaxDrumLayers(roundSize, ACF.AmmoMaxLength)
+
+			local roundsPerRing = Clamp(Floor(tonumber(Data.CrateProjectilesX) or minRounds), minRounds, maxRounds)
+			local numLayers     = Clamp(Floor(tonumber(Data.CrateProjectilesZ) or 2), 1, maxLayers)
+
+			Data.CrateProjectilesX = roundsPerRing
+			Data.CrateProjectilesZ = numLayers
+			Data.CrateProjectilesY = 1
+			Data.Size              = ACF.GetDrumDimensions(roundsPerRing, numLayers, roundSize)
+
+			Entity:SetSize(Data.Size)
+
+			return roundsPerRing * numLayers
+		else
+			-- Standard box crate logic
+			local cx = tonumber(Data.CrateProjectilesX)
+			local cy = tonumber(Data.CrateProjectilesY)
+			local cz = tonumber(Data.CrateProjectilesZ)
+
+			if not (cx and cy and cz) then
+				cx, cy, cz = ACF.GetProjectileCountsFromCrateSize(Data.Size, Class, Data, Bullet)
+			end
+
+			cx = math.max(1, Floor(cx or 3))
+			cy = math.max(1, Floor(cy or 3))
+			cz = math.max(1, Floor(cz or 3))
+
+			-- Persist counts on both Data and Entity
+			Data.CrateProjectilesX = cx
+			Data.CrateProjectilesY = cy
+			Data.CrateProjectilesZ = cz
+
+			-- Recompute and apply consistent crate size from final counts
+			Data.Size = ACF.GetCrateSizeFromProjectileCounts(cx, cy, cz, Class, Data, Bullet)
+
+			Entity:SetSize(Data.Size)
+
+			return cx * cy * cz
 		end
-
-		cx = math.max(1, Floor(cx or 3))
-		cy = math.max(1, Floor(cy or 3))
-		cz = math.max(1, Floor(cz or 3))
-
-		-- Persist counts on both Data and Entity
-		Data.CrateProjectilesX, Data.CrateProjectilesY, Data.CrateProjectilesZ = cx, cy, cz
-
-		-- Recompute and apply consistent crate size from final counts
-		Data.Size = ACF.GetCrateSizeFromProjectileCounts(cx, cy, cz, Class, Data, Bullet)
-		Entity:SetSize(Data.Size)
-
-		return cx * cy * cz
 	end
 
 	local function CalculateExtraData(Entity, Data, Class, Weapon)
@@ -155,17 +180,24 @@ do -- Spawn/Update/Remove
 			end
 
 			Entity.IsBelted = BeltFed
-			ExtraData.AmmoStage = Data.AmmoStage or 0
+			ExtraData.AmmoStage = Data.AmmoStage
 			ExtraData.IsRound = true
-			ExtraData.Capacity = Entity.Capacity or 0
+			ExtraData.Capacity = Entity.Capacity
 			ExtraData.Enabled = true
 			ExtraData.RoundSize = Vector(RoundLength, RoundDiameter, RoundDiameter)
 			ExtraData.LocalAng = Angle(0, 0, 0)
 			ExtraData.Spacing = 0
-			ExtraData.MagSize = Entity.MagSize or 0
-			ExtraData.IsBelted = BeltFed or false
+			ExtraData.MagSize = Entity.MagSize
+			ExtraData.IsBelted = BeltFed
 			ExtraData.RoundModel = RoundModel
 			ExtraData.RoundOffset = RoundOffset
+
+			-- Drum-specific data
+			ExtraData.IsDrum = Entity.Shape == "Cylinder"
+			if ExtraData.IsDrum then
+				ExtraData.RoundsPerRing = Entity.CrateProjectilesX
+				ExtraData.DrumLayers = Entity.CrateProjectilesZ
+			end
 		else
 			ExtraData = { Enabled = false }
 		end
@@ -184,19 +216,29 @@ do -- Spawn/Update/Remove
 
 				if Enabled then
 					-- Send stored projectile counts for client rendering
-					local CountX = Entity.CrateProjectilesX or 3
-					local CountY = Entity.CrateProjectilesY or 3
-					local CountZ = Entity.CrateProjectilesZ or 3
+					-- These are validated at spawn time, no fallbacks needed
+					local CountX = Entity.CrateProjectilesX
+					local CountY = Entity.CrateProjectilesY
+					local CountZ = Entity.CrateProjectilesZ
 
-					net.WriteUInt(ExtraData.Capacity or 0, 25)
-					net.WriteBool(ExtraData.IsRound or false)
-					net.WriteVector(ExtraData.RoundSize or vector_origin)
-					net.WriteAngle(ExtraData.LocalAng or angle_zero)
-					net.WriteVector(Vector(CountX, CountY, CountZ)) -- Send stored projectile counts
-					net.WriteFloat(ExtraData.Spacing or 0)
-					net.WriteUInt(ExtraData.MagSize or 0, 10)
-					net.WriteUInt(ExtraData.AmmoStage or 0, 5)
-					net.WriteBool(ExtraData.IsBelted or false)
+					net.WriteUInt(ExtraData.Capacity, 25)
+					net.WriteBool(ExtraData.IsRound)
+					net.WriteVector(ExtraData.RoundSize)
+					net.WriteAngle(ExtraData.LocalAng)
+					net.WriteVector(Vector(CountX, CountY, CountZ))
+					net.WriteFloat(ExtraData.Spacing)
+					net.WriteUInt(ExtraData.MagSize, 10)
+					net.WriteUInt(ExtraData.AmmoStage, 5)
+					net.WriteBool(ExtraData.IsBelted)
+
+					-- Send drum-specific data
+					local IsDrum = ExtraData.IsDrum
+					net.WriteBool(IsDrum)
+
+					if IsDrum then
+						net.WriteUInt(ExtraData.RoundsPerRing, 8)
+						net.WriteUInt(ExtraData.DrumLayers, 8)
+					end
 
 					local HasModel = ExtraData.RoundModel ~= nil
 
@@ -261,7 +303,7 @@ do -- Spawn/Update/Remove
 		Entity.ShortName  = ShortName or WeaponShort .. " " .. Ammo.ID
 		Entity.EntType    = "Ammo Crate"
 		Entity.ClassData  = Class
-		Entity.Shape      = "Box"
+		Entity.Shape      = Data.AmmoShape or "Box"
 		Entity.Class      = Class.ID
 		Entity.WeaponData = Weapon
 		Entity.Caliber    = Caliber
@@ -319,7 +361,14 @@ do -- Spawn/Update/Remove
 		local Class  = Classes.GetGroup(Source, Data.Weapon)
 		local Weapon = Source.GetItem(Class.ID, Data.Weapon)
 		local Ammo   = AmmoTypes.Get(Data.AmmoType)
-		local Model  = "models/holograms/hq_rcube_thin.mdl"
+
+		-- Select model based on ammo shape
+		local Model
+		if Data.AmmoShape == "Cylinder" then
+			Model = ACF.ContainerShapeModels.Cylinder or "models/acf/core/s_fuel_cyl.mdl"
+		else
+			Model = "models/holograms/hq_rcube_thin.mdl"
+		end
 
 		local CanSpawn = HookRun("ACF_PreSpawnEntity", "acf_ammo", Player, Data, Class, Weapon, Ammo)
 
@@ -384,6 +433,7 @@ do -- Spawn/Update/Remove
 		local OldClass   = self.ClassData
 		local OldWeapon  = self.Weapon
 		local OldCaliber = self.Caliber
+		local OldShape   = self.Shape
 		local Ammo       = AmmoTypes.Get(Data.AmmoType)
 		local Blacklist  = Ammo.Blacklist
 		local Extra      = ""
@@ -398,6 +448,19 @@ do -- Spawn/Update/Remove
 		HookRun("ACF_OnEntityLast", "acf_ammo", self, OldClass)
 
 		ACF.SaveEntity(self)
+
+		-- Update model if shape changed
+		local NewShape = Data.AmmoShape or "Box"
+		if NewShape ~= OldShape then
+			local Model
+			if NewShape == "Cylinder" then
+				Model = ACF.ContainerShapeModels.Cylinder or "models/acf/core/s_fuel_cyl.mdl"
+			else
+				Model = "models/holograms/hq_rcube_thin.mdl"
+			end
+			self.ACF.Model = Model
+			self:SetScaledModel(Model)
+		end
 
 		UpdateCrate(self, Data, Class, Weapon, Ammo)
 
@@ -498,9 +561,9 @@ do -- Overlay
 			State:AddError("Not linked to a weapon!")
 		end
 
-		local CountX = self.CrateProjectilesX or 1
-		local CountY = self.CrateProjectilesY or 1
-		local CountZ = self.CrateProjectilesZ or 1
+		local CountX = self.CrateProjectilesX
+		local CountY = self.CrateProjectilesY
+		local CountZ = self.CrateProjectilesZ
 
 		if AmmoInfo and AmmoInfo ~= "" then
 			AmmoInfo = AmmoInfo
