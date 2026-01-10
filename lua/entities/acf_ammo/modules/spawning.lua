@@ -147,6 +147,14 @@ do -- Spawn/Update/Remove
 			cy = math.max(1, Floor(cy or 3))
 			cz = math.max(1, Floor(cz or 3))
 
+			-- Clamp counts to maximum allowed dimensions
+			local roundSize = ACF.GetRoundProperties(Class, Data, Bullet)
+			local maxX, maxY, maxZ = ACF.GetMaxCounts(roundSize, ACF.AmmoMaxLength, ACF.AmmoMaxWidth, cy, cz)
+
+			cx = math.min(cx, maxX)
+			cy = math.min(cy, maxY)
+			cz = math.min(cz, maxZ)
+
 			-- Persist counts on both Data and Entity
 			Data.CrateProjectilesX = cx
 			Data.CrateProjectilesY = cy
@@ -539,7 +547,7 @@ do -- Spawn/Update/Remove
 		self.EmptyMass = Mass
 	end
 
-	Entities.Register("acf_ammo", ACF.MakeAmmo, "Weapon", "Caliber", "AmmoType", "Size", "AmmoStage", "CrateProjectilesX", "CrateProjectilesY", "CrateProjectilesZ")
+	Entities.Register("acf_ammo", ACF.MakeAmmo, "Weapon", "Caliber", "AmmoType", "AmmoShape", "Size", "AmmoStage", "CrateProjectilesX", "CrateProjectilesY", "CrateProjectilesZ")
 
 	ACF.RegisterLinkSource("acf_ammo", "Weapons")
 end
