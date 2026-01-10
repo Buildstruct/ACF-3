@@ -609,25 +609,46 @@ function ACF.UpdateAmmoMenu(Menu)
 	UpdateProjectileCountLimits(ToolData, BulletData)
 end
 
+---Updates the shape selector visibility based on whether the current weapon is automatic.
+---Only automatic weapons can use drums.
+---@param Menu userdata The menu containing the shape selector.
+local function UpdateShapeSelector(Menu)
+	local ShapeList = Menu.AmmoShapeList
+	if not ShapeList then return end
+
+	local ToolData = ACF.GetAllClientData()
+	local Class = GetWeaponClass(ToolData)
+	local IsAutomatic = Class and Class.IsAutomatic
+
+	if IsAutomatic then
+		-- Show both options for automatic weapons
+		ShapeList:SetVisible(true)
+	else
+		-- Only show Crate for non-automatic weapons (hide drum option)
+		ShapeList:SetVisible(false)
+
+		-- Force shape to Crate if it was set to Drum
+		if ACF.GetClientString("AmmoShape", "Box") == "Cylinder" then
+			ACF.SetClientData("AmmoShape", "Box")
+			ShapeList:ChooseOptionID(1)
+
+			-- Reset slider visibility and labels for crate mode
+			if CountSliders.X and CountSliders.Y and CountSliders.Z then
+				CountSliders.X:SetVisible(true)
+				CountSliders.X:SetMin(1)
+				CountSliders.Y:SetVisible(true)
+			end
+		end
+	end
+end
+
 ---Creates the basic information and panels on the ammunition menu.
 ---@param Menu userdata The panel in which the entire ACF menu is being placed on.
 function ACF.CreateAmmoMenu(Menu)
-	Menu:AddTitle("#acf.menu.ammo.settings")
-
-	local List = Menu:AddComboBox()
-
-	-- Ammo shape selector (Box or Cylinder/Drum)
-	Menu:AddLabel("Ammo Crate Shape:")
-	local ShapeList = Menu:AddComboBox()
-	ShapeList:AddChoice("Box", "Box")
-	ShapeList:AddChoice("Cylinder (Ammo Drum)", "Cylinder")
-
-	-- Set default shape
-	local DefaultShape = ACF.GetClientString("AmmoShape", "Box")
-	ACF.SetClientData("AmmoShape", DefaultShape, true)
-
-	-- Select the correct shape in the combo box (1 = Box, 2 = Cylinder)
-	ShapeList:ChooseOptionID(DefaultShape == "Cylinder" and 2 or 1)
+	-- ============================================
+	-- Container Settings Section
+	-- ============================================
+	local ContainerBase = Menu:AddCollapsible("Container Settings", true, "icon16/box.png")
 
 	-- Set default projectile count values before creating controls to prevent nil value errors
 	local DefaultCountX = ACF.GetClientNumber("CrateProjectilesX", 3)
@@ -637,12 +658,27 @@ function ACF.CreateAmmoMenu(Menu)
 	ACF.SetClientData("CrateProjectilesY", DefaultCountY, true)
 	ACF.SetClientData("CrateProjectilesZ", DefaultCountZ, true)
 
+	-- Shape selector (Crate or Drum)
+	local ShapeList = ContainerBase:AddComboBox()
+	ShapeList:AddChoice("Crate", "Box")
+	ShapeList:AddChoice("Drum", "Cylinder")
+
+	-- Store references for later updates
+	Menu.AmmoShapeList = ShapeList
+
+	-- Set default shape
+	local DefaultShape = ACF.GetClientString("AmmoShape", "Box")
+	ACF.SetClientData("AmmoShape", DefaultShape, true)
+
+	-- Select the correct shape in the combo box (1 = Box, 2 = Cylinder)
+	ShapeList:ChooseOptionID(DefaultShape == "Cylinder" and 2 or 1)
+
 	-- Labels that change based on shape
 	local CountXLabel = "#acf.menu.ammo.projectiles_length"
 	local CountYLabel = "#acf.menu.ammo.projectiles_width"
 	local CountZLabel = "#acf.menu.ammo.projectiles_height"
 
-	local CountX = Menu:AddSlider(CountXLabel, 1, 50, 0)
+	local CountX = ContainerBase:AddSlider(CountXLabel, 1, 50, 0)
 	CountX:SetClientData("CrateProjectilesX", "OnValueChanged")
 	CountX:DefineSetter(function(Panel, _, _, Value)
 		local Min = Panel:GetMin() or 1
@@ -651,7 +687,7 @@ function ACF.CreateAmmoMenu(Menu)
 		return Count
 	end)
 
-	local CountY = Menu:AddSlider(CountYLabel, 1, 50, 0)
+	local CountY = ContainerBase:AddSlider(CountYLabel, 1, 50, 0)
 	CountY:SetClientData("CrateProjectilesY", "OnValueChanged")
 	CountY:DefineSetter(function(Panel, _, _, Value)
 		local Min = Panel:GetMin() or 1
@@ -660,7 +696,7 @@ function ACF.CreateAmmoMenu(Menu)
 		return Count
 	end)
 
-	local CountZ = Menu:AddSlider(CountZLabel, 1, 50, 0)
+	local CountZ = ContainerBase:AddSlider(CountZLabel, 1, 50, 0)
 	CountZ:SetClientData("CrateProjectilesZ", "OnValueChanged")
 	CountZ:DefineSetter(function(Panel, _, _, Value)
 		local Min = Panel:GetMin() or 1
@@ -681,10 +717,10 @@ function ACF.CreateAmmoMenu(Menu)
 			CountY:SetVisible(false)
 			CountZ:SetText("Projectiles (Stacks)")
 		else
-			-- For boxes: standard X/Y/Z counts
+			-- For crates: standard X/Y/Z counts
 			CountX:SetVisible(true)
 			CountX:SetText(language.GetPhrase(CountXLabel))
-			CountX:SetMin(1) -- Reset to box minimum
+			CountX:SetMin(1) -- Reset to crate minimum
 			CountY:SetVisible(true)
 			CountZ:SetText(language.GetPhrase(CountZLabel))
 		end
@@ -709,7 +745,7 @@ function ACF.CreateAmmoMenu(Menu)
 		CountZ:SetText("Projectiles (Stacks)")
 	end
 
-	local Capacity = Menu:AddLabel("")
+	local Capacity = ContainerBase:AddLabel("")
 	Capacity:TrackClientData("CrateProjectilesX", "SetText")
 	Capacity:TrackClientData("CrateProjectilesY", "SetText")
 	Capacity:TrackClientData("CrateProjectilesZ", "SetText")
@@ -730,7 +766,7 @@ function ACF.CreateAmmoMenu(Menu)
 		return "Capacity: " .. RoundCount .. (RoundCount == 1 and " round" or " rounds")
 	end)
 
-	local Size = Menu:AddLabel("")
+	local Size = ContainerBase:AddLabel("")
 	Size:TrackClientData("CrateProjectilesX", "SetText")
 	Size:TrackClientData("CrateProjectilesY", "SetText")
 	Size:TrackClientData("CrateProjectilesZ", "SetText")
@@ -764,7 +800,7 @@ function ACF.CreateAmmoMenu(Menu)
 			local SizeText = "Drum Size: Diameter %.2f x Height %.2f"
 			return SizeText:format(math.Round(BoxSize.x, 2), math.Round(BoxSize.z, 2))
 		else
-			local SizeText = language.GetPhrase("#acf.menu.ammo.crate_size")
+			local SizeText = "Crate Size: %.2f x %.2f x %.2f"
 			return SizeText:format(math.Round(BoxSize.x, 2), math.Round(BoxSize.y, 2), math.Round(BoxSize.z, 2))
 		end
 	end)
@@ -774,7 +810,13 @@ function ACF.CreateAmmoMenu(Menu)
 	CountSliders.Y = CountY
 	CountSliders.Z = CountZ
 
-	local Base = Menu:AddCollapsible("#acf.menu.ammo.ammo_info", nil, "icon16/chart_bar_edit.png")
+	-- ============================================
+	-- Ammo Settings Section
+	-- ============================================
+	local Base = Menu:AddCollapsible("#acf.menu.ammo.ammo_info", true, "icon16/chart_bar_edit.png")
+
+	-- Ammo type selector (moved inside the collapsible)
+	local List = Base:AddComboBox()
 	local Title = Base:AddTitle()
 	local Desc = Base:AddLabel()
 	Desc:SetText("")
@@ -811,6 +853,9 @@ function ACF.CreateAmmoMenu(Menu)
 	]]--
 	function List:LoadEntries(Class)
 		ACF.LoadSortedList(self, GetAmmoList(Class), "Name", "SpawnIcon")
+
+		-- Update shape selector visibility based on whether weapon is automatic
+		UpdateShapeSelector(Menu)
 
 		-- Initialize box size when entries are loaded
 		--timer.Simple(0, InitializeBoxSize)
