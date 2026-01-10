@@ -6,6 +6,8 @@ Components.Register("AL", {
 	Entity = "acf_autoloader"
 })
 
+-- Converts shell scale to model scale
+local RefSize = Vector(43.233333587646, 7.2349619865417, 7.2349619865417)
 Components.RegisterItem("AL-IMP", "AL", {
 	Name        = "Autoloader",
 	Description = "An automatic ammunition loading system.",
@@ -32,8 +34,8 @@ Components.RegisterItem("AL-IMP", "AL", {
 
 			Panel:SetValue(Size)
 
-			AutoloaderSize.y = Size / 7.2349619865417 / ACF.InchToMm
-			AutoloaderSize.z = Size / 7.2349619865417 / ACF.InchToMm
+			AutoloaderSize.y = Size / RefSize.y / ACF.InchToMm
+			AutoloaderSize.z = Size / RefSize.z / ACF.InchToMm
 
 			UpdateAutoloaderStats()
 
@@ -47,7 +49,7 @@ Components.RegisterItem("AL-IMP", "AL", {
 
 			Panel:SetValue(Length)
 
-			AutoloaderSize.x = (Length / 43.233333587646 * 10) / ACF.InchToMm
+			AutoloaderSize.x = (Length / RefSize.x * 10) / ACF.InchToMm
 
 			UpdateAutoloaderStats()
 

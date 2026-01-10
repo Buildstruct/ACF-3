@@ -10,8 +10,11 @@ local TraceLine   = util.TraceLine
 local Classes     = ACF.Classes
 local HookRun     = hook.Run
 
+-- Converts shell scale to model scale
+local RefSize = Vector(43.233333587646, 7.2349619865417, 7.2349619865417)
+
 function ENT.ACF_OnVerifyClientData(ClientData)
-	ClientData.AutoloaderSize = Vector(ClientData.AutoloaderLength / 43.233333587646 * 10, ClientData.AutoloaderCaliber / 7.2349619865417, ClientData.AutoloaderCaliber / 7.2349619865417) / ACF.InchToMm
+	ClientData.AutoloaderSize = Vector(ClientData.AutoloaderLength / RefSize.x * 10, ClientData.AutoloaderCaliber / RefSize.y, ClientData.AutoloaderCaliber / RefSize.z) / ACF.InchToMm
 end
 
 function ENT:ACF_PreSpawn()
