@@ -1,209 +1,190 @@
-local ACF       = ACF
-local MaxRounds = GetConVar( "acf_maxroundsdisplay" )
-local Queued    = {}
+local ACF = ACF
 
 include( "shared.lua" )
 
 killicon.Add( "acf_ammo", "HUD/killicons/acf_ammo", ACF.KillIconColor )
 
+do --MARK: Networking
+	local MaxRounds = GetConVar( "acf_maxroundsdisplay" )
+	local Queued    = {}
 
-local function updateAmmoCount( entity, ammo )
-	if not IsValid( entity ) then return end
-	-- Networking fail - is there a better way to handle this...
-	if entity:GetClass() ~= "acf_ammo" then return end
-	if not entity.HasData then
-		if entity.HasData == nil then
-			entity:RequestAmmoData()
-		end
+	local function updateAmmoCount( entity, ammo )
+		if not IsValid( entity ) then return end
 
-		return
-	end
+		if entity:GetClass() ~= "acf_ammo" then return end
 
-	-- Avoid redundant GetNWInt call when ammo is already provided
-	local newAmmo = ammo or entity:GetNWInt( "Ammo", 0 )
-
-	-- Early-out if ammo hasn't changed
-	if entity.Ammo == newAmmo then return end
-
-	entity.Ammo = newAmmo
-
-	local maxDisplayRounds = math.max( 0, MaxRounds:GetInt() )
-	entity.TargetDisplayAmmo = math.min( newAmmo, maxDisplayRounds )
-
-	-- Don't call SetAmount here - models are only created/updated in Draw()
-	-- when the player is actually looking at this crate
-end
-
-net.Receive( "ACF_RequestAmmoData", function()
-	local entity = net.ReadEntity()
-	if not IsValid( entity ) then return end
-
-	entity.HasData = net.ReadBool()
-
-	if not entity.HasData then return end
-
-	-- Read network data
-	entity.Capacity         = net.ReadUInt( 25 )
-	entity.IsRound          = net.ReadBool()
-	entity.RoundSize        = net.ReadVector()
-	entity.LocalAng         = net.ReadAngle()
-	entity.ProjectileCounts = net.ReadVector()
-	entity.Spacing          = net.ReadFloat()
-	entity.MagSize          = net.ReadUInt( 10 )
-	entity.AmmoStage        = net.ReadUInt( 5 )
-	entity.IsBelted         = net.ReadBool()
-
-	-- Read drum-specific data
-	entity.IsDrum = net.ReadBool()
-
-	if entity.IsDrum then
-		entity.RoundsPerRing = net.ReadUInt( 8 )
-		entity.DrumLayers    = net.ReadUInt( 8 )
-	end
-
-	local hasCustomModel = net.ReadBool()
-
-	if hasCustomModel then
-		entity.RoundModel  = net.ReadString()
-		entity.RoundOffset = net.ReadVector()
-	end
-
-	-- Determine model path (unified for all crate types)
-	local modelPath = entity.RoundModel
-
-	if not modelPath then
-		-- Debug: use cylinder model for visualization
-		-- TODO: Revert to proper ammo model selection after debugging
-		modelPath = "models/holograms/cylinder.mdl"
-
-		--[[
-		modelPath = "models/munitions/round_100mm.mdl"
-
-		if entity.BulletData and entity.BulletData.Type then
-			local ammoType = ACF.Classes.AmmoTypes.Get( entity.BulletData.Type )
-			if ammoType and ammoType.Model then
-				modelPath = ammoType.Model
+		if not entity.HasData then
+			if entity.HasData == nil then
+				entity:RequestAmmoData()
 			end
+
+			return
 		end
-		--]]
+
+		local newAmmo = ammo or entity:GetNWInt( "Ammo", 0 )
+
+		if entity.Ammo == newAmmo then return end
+
+		entity.Ammo = newAmmo
+
+		local maxDisplayRounds = math.max( 0, MaxRounds:GetInt() )
+		entity.TargetDisplayAmmo = math.min( newAmmo, maxDisplayRounds )
 	end
 
-	-- Calculate model scale
-	local modelSize  = ACF.ModelData.GetModelSize( modelPath )
-	local modelScale = Vector( 1, 1, 1 )
+	net.Receive( "ACF_RequestAmmoData", function()
+		local entity = net.ReadEntity()
+		if not IsValid( entity ) then return end
 
-	if modelSize then
+		entity.HasData = net.ReadBool()
+
+		if not entity.HasData then return end
+
+		entity.Capacity         = net.ReadUInt( 25 )
+		entity.IsRound          = net.ReadBool()
+		entity.RoundSize        = net.ReadVector()
+		entity.LocalAng         = net.ReadAngle()
+		entity.ProjectileCounts = net.ReadVector()
+		entity.Spacing          = net.ReadFloat()
+		entity.MagSize          = net.ReadUInt( 10 )
+		entity.AmmoStage        = net.ReadUInt( 5 )
+		entity.IsBelted         = net.ReadBool()
+
+		entity.IsDrum = net.ReadBool()
+
+		if entity.IsDrum then
+			entity.RoundsPerRing = net.ReadUInt( 8 )
+			entity.DrumLayers    = net.ReadUInt( 8 )
+		end
+
+		local hasCustomModel = net.ReadBool()
+
 		if hasCustomModel then
-			modelScale = Vector(
-				entity.RoundSize.x / modelSize.x,
-				entity.RoundSize.y / modelSize.y,
-				entity.RoundSize.z / modelSize.z
-			)
-		else
-			modelScale = Vector(
-				entity.RoundSize.y / modelSize.x,
-				entity.RoundSize.z / modelSize.y,
-				entity.RoundSize.x / modelSize.z
-			)
+			entity.RoundModel  = net.ReadString()
+			entity.RoundOffset = net.ReadVector()
 		end
-	end
 
-	-- Calculate projectile angle
-	local localAngle = Angle( entity.LocalAng )
-	if not hasCustomModel then
-		localAngle:RotateAroundAxis( entity.LocalAng:Right(), -90 )
-	end
+		-- Resolve model path
+		local modelPath = entity.RoundModel
 
-	-- Cache calculated data for model creation
-	entity.CachedModelPath     = modelPath
-	entity.CachedLocalAngle    = localAngle
+		if not modelPath then
+			modelPath = "models/munitions/round_100mm.mdl"
 
-	-- Cache model scale matrix
-	local scaleMatrix = Matrix()
-	scaleMatrix:SetScale( modelScale )
-	entity.CachedScaleMatrix = scaleMatrix
-
-	-- Cache model offset
-	-- For center-origin models (like cylinder.mdl), no offset is needed
-	-- For base-origin models, offset by -roundLength/2 to center
-	local modelOffset = Vector( 0, 0, 0 )
-
-	-- Debug: cylinder.mdl has center origin, so no offset needed
-	-- TODO: Restore offset logic when reverting to proper ammo models
-	--[[
-	entity.CachedDefaultOffset = not hasCustomModel and Vector( entity.RoundSize.x * 0.5, 0, 0 ) or nil
-	if hasCustomModel and entity.RoundOffset then
-		modelOffset = entity.RoundOffset
-	elseif entity.CachedDefaultOffset then
-		modelOffset = -entity.CachedDefaultOffset
-	end
-	--]]
-
-	entity.CachedModelOffset = modelOffset
-
-	-- Cache crate start position (different for drums vs boxes)
-	if entity.IsDrum then
-		-- For drums, rounds are positioned radially - no start position offset needed
-		-- The drum center is at origin, rounds are positioned by GetDrumRoundOffset
-		entity.CachedLocalStartPos = Vector( 0, 0, 0 )
-	else
-		local crateDimensions = ACF.GetCrateDimensions( entity.ProjectileCounts, entity.RoundSize )
-		entity.CachedLocalStartPos = Vector(
-			-crateDimensions.x * 0.5 + entity.RoundSize.x * 0.5,
-			-crateDimensions.y * 0.5 + entity.RoundSize.y * 0.5,
-			-crateDimensions.z * 0.5 + entity.RoundSize.z * 0.5
-		)
-	end
-
-	-- Clear existing models since data changed
-	if entity._RoundModels then
-		for _, model in pairs( entity._RoundModels ) do
-			if IsValid( model ) then
-				model:Remove()
+			if entity.BulletData and entity.BulletData.Type then
+				local ammoType = ACF.Classes.AmmoTypes.Get( entity.BulletData.Type )
+				if ammoType and ammoType.Model then
+					modelPath = ammoType.Model
+				end
 			end
 		end
-	end
 
-	entity._RoundModels      = nil
-	entity.DisplayAmmo       = nil
-	entity.TargetDisplayAmmo = nil
+		-- Calculate model scale
+		local modelSize  = ACF.ModelData.GetModelSize( modelPath )
+		local modelScale = Vector( 1, 1, 1 )
 
-	if Queued[entity] then
-		Queued[entity] = nil
-	end
+		if modelSize then
+			if hasCustomModel then
+				modelScale = Vector(
+					entity.RoundSize.x / modelSize.x,
+					entity.RoundSize.y / modelSize.y,
+					entity.RoundSize.z / modelSize.z
+				)
+			else
+				modelScale = Vector(
+					entity.RoundSize.y / modelSize.x,
+					entity.RoundSize.z / modelSize.y,
+					entity.RoundSize.x / modelSize.z
+				)
+			end
+		end
 
-	updateAmmoCount( entity )
-end )
+		-- Calculate projectile angle
+		local localAngle = Angle( entity.LocalAng )
+		if not hasCustomModel then
+			localAngle:RotateAroundAxis( entity.LocalAng:Right(), -90 )
+		end
 
-function ENT:Initialize()
-	self:SetNWVarProxy( "Ammo", function( _, _, _, ammo )
-		updateAmmoCount( self, ammo )
+		-- Cache data for model creation
+		entity.CachedModelPath      = modelPath
+		entity.CachedLocalAngle     = localAngle
+		entity.CachedHasCustomModel = hasCustomModel
+
+		local scaleMatrix = Matrix()
+		scaleMatrix:SetScale( modelScale )
+		entity.CachedScaleMatrix = scaleMatrix
+
+		-- Cache model offset for box positioning (base-origin models need centering)
+		local modelOffset = Vector( 0, 0, 0 )
+
+		if hasCustomModel then
+			if entity.RoundOffset then
+				modelOffset = entity.RoundOffset
+			end
+		else
+			modelOffset = -Vector( entity.RoundSize.x * 0.5, 0, 0 )
+		end
+
+		entity.CachedModelOffset = modelOffset
+
+		-- Cache crate start position for box crates
+		if not entity.IsDrum then
+			local crateDimensions = ACF.GetCrateDimensions( entity.ProjectileCounts, entity.RoundSize )
+			entity.CachedLocalStartPos = Vector(
+				-crateDimensions.x * 0.5 + entity.RoundSize.x * 0.5,
+				-crateDimensions.y * 0.5 + entity.RoundSize.y * 0.5,
+				-crateDimensions.z * 0.5 + entity.RoundSize.z * 0.5
+			)
+		end
+
+		-- Reset model state
+		if entity._RoundModels then
+			for _, model in pairs( entity._RoundModels ) do
+				if IsValid( model ) then
+					model:Remove()
+				end
+			end
+		end
+
+		entity._RoundModels      = nil
+		entity.DisplayAmmo       = nil
+		entity.TargetDisplayAmmo = nil
+
+		if Queued[entity] then
+			Queued[entity] = nil
+		end
+
+		updateAmmoCount( entity )
 	end )
 
-	cvars.AddChangeCallback( "acf_maxroundsdisplay", function()
-		updateAmmoCount( self )
-	end, "Ammo Crate " .. self:EntIndex() )
+	function ENT:Initialize()
+		self:SetNWVarProxy( "Ammo", function( _, _, _, ammo )
+			updateAmmoCount( self, ammo )
+		end )
 
-	self.BaseClass.Initialize( self )
+		cvars.AddChangeCallback( "acf_maxroundsdisplay", function()
+			updateAmmoCount( self )
+		end, "Ammo Crate " .. self:EntIndex() )
+
+		self.BaseClass.Initialize( self )
+	end
+
+	function ENT:RequestAmmoData()
+		if Queued[self] then return end
+
+		Queued[self] = true
+
+		net.Start( "ACF_RequestAmmoData" )
+			net.WriteEntity( self )
+		net.SendToServer()
+	end
+
+	function ENT:OnFullUpdate()
+		net.Start( "ACF_RequestAmmoData" )
+			net.WriteEntity( self )
+		net.SendToServer()
+	end
 end
 
-function ENT:RequestAmmoData()
-	if Queued[self] then return end
-
-	Queued[self] = true
-
-	net.Start( "ACF_RequestAmmoData" )
-		net.WriteEntity( self )
-	net.SendToServer()
-end
-
-function ENT:OnFullUpdate()
-	net.Start( "ACF_RequestAmmoData" )
-		net.WriteEntity( self )
-	net.SendToServer()
-end
-
-do -- Ammo overlay rendering
+do --MARK: Ammo rendering
 	local drawBoxes      = GetConVar( "acf_drawboxes" )
 	local wireOutline    = GetConVar( "wire_drawoutline" )
 	local getRoundOffset = ACF.GetRoundOffset
@@ -257,9 +238,10 @@ do -- Ammo overlay rendering
 
 		local models = self._RoundModels
 
-		-- Handle drum vs box positioning
 		if self.IsDrum then
-			-- Drum: radial positioning with rounds pointing toward center
+			-- MARK: Drum
+			-- Radial positioning with rounds pointing toward center
+
 			local roundsPerRing = self.RoundsPerRing
 			local numLayers     = self.DrumLayers
 
@@ -270,14 +252,18 @@ do -- Ammo overlay rendering
 				local drumAngle = Angle( localAngle )
 				drumAngle:RotateAroundAxis( Vector( 0, 0, 1 ), localAng.yaw )
 
-				-- GetDrumRoundOffset already positions for center-origin models
-				-- (positionRadius = baseRadius - roundLength/2)
-				-- No additional modelOffset needed for drums
+				-- For base-origin models (default shells), offset outward along radial direction
+				-- by half the round length to center the model at the calculated position
+				local finalPos = localPos
+				if not self.CachedHasCustomModel then
+					local radialDir = Vector( localPos.x, localPos.y, 0 ):GetNormalized()
+					finalPos = localPos + radialDir * roundSize.x * 0.5
+				end
 
 				local model = ClientsideModel( modelPath, RENDERGROUP_OPAQUE )
 				if IsValid( model ) then
 					model:SetParent( self )
-					model:SetPos( self:LocalToWorld( localPos ) )
+					model:SetPos( self:LocalToWorld( finalPos ) )
 					model:SetAngles( self:LocalToWorldAngles( drumAngle ) )
 					model:SetNoDraw( true )
 					model:DrawShadow( false )
@@ -286,7 +272,7 @@ do -- Ammo overlay rendering
 				end
 			end
 		else
-			-- Box: grid positioning
+			-- MARK: Box
 			local fits          = self.ProjectileCounts
 			local localStartPos = self.CachedLocalStartPos
 
@@ -390,7 +376,7 @@ do -- Ammo overlay rendering
 	end
 end
 
-do -- Ammo stage drawing
+do --MARK: Stages overlay
 	function ENT:DrawStage()
 		local cratePos = self:GetPos():ToScreen()
 		local orange   = Color( 255, 127, 0 )
