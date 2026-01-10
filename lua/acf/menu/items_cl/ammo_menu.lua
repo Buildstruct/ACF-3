@@ -676,10 +676,10 @@ function ACF.CreateAmmoMenu(Menu)
 		if Data == "Cylinder" then
 			-- For drums: X = rounds per ring, Y is hidden, Z = layers
 			CountX:SetVisible(true)
-			CountX:SetText("Rounds Per Ring")
+			CountX:SetText("Projectiles (Per Ring)")
 			CountX:SetMin(6)
 			CountY:SetVisible(false)
-			CountZ:SetText("Number of Layers")
+			CountZ:SetText("Projectiles (Stacks)")
 		else
 			-- For boxes: standard X/Y/Z counts
 			CountX:SetVisible(true)
@@ -703,11 +703,32 @@ function ACF.CreateAmmoMenu(Menu)
 
 	-- Apply initial visibility based on default shape
 	if DefaultShape == "Cylinder" then
-		CountX:SetText("Rounds Per Ring")
+		CountX:SetText("Projectiles (Per Ring)")
 		CountX:SetMin(6)
 		CountY:SetVisible(false)
-		CountZ:SetText("Number of Layers")
+		CountZ:SetText("Projectiles (Stacks)")
 	end
+
+	local Capacity = Menu:AddLabel("")
+	Capacity:TrackClientData("CrateProjectilesX", "SetText")
+	Capacity:TrackClientData("CrateProjectilesY", "SetText")
+	Capacity:TrackClientData("CrateProjectilesZ", "SetText")
+	Capacity:TrackClientData("AmmoShape")
+	Capacity:DefineSetter(function()
+		local CountX = ACF.GetClientNumber("CrateProjectilesX", 3)
+		local CountY = ACF.GetClientNumber("CrateProjectilesY", 3)
+		local CountZ = ACF.GetClientNumber("CrateProjectilesZ", 3)
+		local Shape  = ACF.GetClientString("AmmoShape", "Box")
+
+		local RoundCount
+		if Shape == "Cylinder" then
+			RoundCount = CountX * CountZ
+		else
+			RoundCount = CountX * CountY * CountZ
+		end
+
+		return "Capacity: " .. RoundCount .. (RoundCount == 1 and " round" or " rounds")
+	end)
 
 	local Size = Menu:AddLabel("")
 	Size:TrackClientData("CrateProjectilesX", "SetText")
