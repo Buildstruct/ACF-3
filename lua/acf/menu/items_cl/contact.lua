@@ -52,4 +52,4 @@ local function CreateMenu(Menu)
 	end
 end
 
-ACF.AddMenuItem(301, "#acf.menu.about", "#acf.menu.contact", "feed", CreateMenu)
+ACF.AddMenuItem(2, "#acf.menu.about", "#acf.menu.contact", "feed", CreateMenu)

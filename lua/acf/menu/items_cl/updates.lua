@@ -88,6 +88,6 @@ local function CreateMenu(Menu)
 	UpdateMenu()
 end
 
-ACF.AddMenuItem(1, "#acf.menu.about", "#acf.menu.updates", "newspaper", CreateMenu)
+ACF.AddMenuItem(301, "#acf.menu.about", "#acf.menu.updates", "newspaper", CreateMenu)
 
 hook.Add("ACF_OnFetchRepository", "ACF Updates Menu", UpdateMenu)
