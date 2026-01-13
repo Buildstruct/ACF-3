@@ -57,18 +57,17 @@ local function DimToModel(x, y, z)
     local YK = FindNiceDimension(y)
     local ZK = FindNiceDimension(z)
 
-    local Transposed = false
     if XK > YK then
         XK, YK = YK, XK
-        Transposed = true
     end
 
     local XEntry = SpropsPain[XK]
     local YEntry = SpropsPain[YK]
     local ZEntry = SpropsPain[ZK]
+    if XEntry.Size == nil then return nil, "Not a valid sprops size" end
     local Model = "models/sprops/" .. ZEntry.Rect .. "/size_" .. XEntry.Size .. "/rect_" .. XEntry.String .. "x" .. YEntry.String
     if ZK ~= 0.5 then Model = Model .. "x" .. ZEntry.String end
-    return Model .. ".mdl", Transposed
+    return Model .. ".mdl"
 end
 
 function ACF.ConvertBaseplate(Player, Target)
@@ -145,7 +144,8 @@ function ACF.ConvertBaseplate(Player, Target)
         end
     elseif BaseplateToProp then
         -- Baseplate to prop conversion
-        local Model, _ = DimToModel(math.Round(BoxSize.x, 2), math.Round(BoxSize.y, 2), math.Round(BoxSize.z, 2))
+        local Model, Error = DimToModel(math.Round(BoxSize.x, 2), math.Round(BoxSize.y, 2), math.Round(BoxSize.z, 2))
+        if not Model then return false, Error end
 
         local Baseplate = Entities[Target:EntIndex()]
         PrintTable(Baseplate)
