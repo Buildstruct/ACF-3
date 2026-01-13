@@ -1,4 +1,5 @@
 local ACF      		= ACF
+local Clock         = ACF.Utilities.Clock
 
 local function GetBaseplateProperties(Ent, Self, SelfPos, SelfRadius)
 	if Ent == Self then return false end
@@ -51,7 +52,10 @@ hook.Add("Think", "ACF_Baseplate_Collision_Simulation", function()
 			local Valid2, Physics2, Pos2, Vel2, Contraption2, PhysMass2, TotalMass2, Radius2 = GetBaseplateProperties(BP2)
 
 			if not Valid1 or not Valid2 then continue end
+			if not Contraption1 or not Contraption2 then continue end
 			if Contraption1 == Contraption2 then continue end
+
+			if not ACF.DoesContraptionHavePlayers(Contraption1) or not ACF.DoesContraptionHavePlayers(Contraption2) then continue end
 
 			local IntersectionDistance, IntersectionDirection, IntersectionCenter = CalculateSphereIntersection(Pos1, Radius1, Pos2, Radius2)
 
@@ -103,7 +107,7 @@ end
 
 function ENT:PlayBaseplateRepulsionSound(Vel)
 	local Hard = Vel:Length() > 500 and true or false
-	local Now  = CurTime()
+	local Now  = Clock.CurTime
 	local Prev = self.LastPlayRepulsionSound
 	if Prev and Now - Prev < 0.75 then return end
 

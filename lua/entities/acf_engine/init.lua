@@ -548,25 +548,19 @@ function ENT:UpdateOutputs(SelfTbl)
 	end
 end
 
-local Text = "%s\n\n%s\nPower: %s kW / %s hp\nTorque: %s Nm / %s ft-lb\nPowerband: %s - %s RPM\nRedline: %s RPM"
-
-function ENT:UpdateOverlayText()
-	local State
+function ENT:ACF_UpdateOverlayState(State)
 	if not ACF.AllowSpecialEngines and self.IsSpecial then
-		State = "Disabled: Special engines are disabled."
+		State:AddError("Disabled: Special engines are disabled.")
 	elseif self.Active then
-		State = "Active"
+		State:AddSuccess("Active")
 	else
-		State = "Idle"
+		State:AddWarning("Idle")
 	end
-	local Name = self.Name
-	local Power, PowerFt = Round(self.PeakPower), Round(self.PeakPower * ACF.KwToHp)
-	local Torque, TorqueFt = Round(self.PeakTorque), Round(self.PeakTorque * ACF.NmToFtLb)
-	local PowerbandMin = self.PeakMinRPM
-	local PowerbandMax = self.PeakMaxRPM
-	local Redline = self.LimitRPM
-
-	return Text:format(State, Name, Power, PowerFt, Torque, TorqueFt, PowerbandMin, PowerbandMax, Redline)
+	State:AddKeyValue("Type", self.Name)
+	State:AddKeyValue("Power", ("%s kW / %s hp"):format(Round(self.PeakPower), Round(self.PeakPower * ACF.KwToHp)))
+	State:AddKeyValue("Torque", ("%s Nm / %s ft-lb"):format(Round(self.PeakTorque), Round(self.PeakTorque * ACF.NmToFtLb)))
+	State:AddKeyValue("Powerband", ("%s - %s RPM"):format(self.PeakMinRPM, self.PeakMaxRPM))
+	State:AddKeyValue("Redline", ("%s RPM"):format(self.LimitRPM))
 end
 
 ACF.AddInputAction("acf_engine", "Throttle", function(Entity, Value)
@@ -679,12 +673,6 @@ hook.Add("cfw.contraption.entityAdded", "ACF_Engine_ContraptionChecks", function
 		Contraption.HasEngines   = true
 		Contraption.TotalEngines = (Contraption.TotalEngines or 0) + 1
 	end
-
-	if Contraption.Engines then
-		for Engine in pairs(Contraption.Engines) do
-			ACF.CheckLegal(Engine)
-		end
-	end
 end)
 
 hook.Add("cfw.contraption.entityRemoved", "ACF_Engine_ContraptionChecks", function(Contraption, Ent)
@@ -695,12 +683,6 @@ hook.Add("cfw.contraption.entityRemoved", "ACF_Engine_ContraptionChecks", functi
 
 		Contraption.HasEngines   = next(Contraption.Engines) and true or nil
 		Contraption.TotalEngines = Contraption.HasEngines and 0 or table.Count(Contraption.Engines)
-	end
-
-	if Contraption.Engines then
-		for Engine in pairs(Contraption.Engines) do
-			ACF.CheckLegal(Engine)
-		end
 	end
 end)
 
@@ -941,6 +923,12 @@ function ENT:PostEntityPaste(Player, Ent, CreatedEntities)
 
 	--Wire dupe info
 	self.BaseClass.PostEntityPaste(self, Player, Ent, CreatedEntities)
+end
+
+function ENT:GetCost()
+	local selftbl = self:GetTable()
+
+	return math.max(5, (selftbl.PeakTorque / 160) + (selftbl.PeakPower / 80))
 end
 
 function ENT:OnRemove()

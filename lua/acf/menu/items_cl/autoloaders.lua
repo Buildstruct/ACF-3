@@ -1,0 +1,59 @@
+local ACF        = ACF
+local Components = ACF.Classes.Components
+
+Components.Register("AL", {
+	Name   = "Autoloader",
+	Entity = "acf_autoloader"
+})
+
+-- Converts shell scale to model scale
+local RefSize = Vector(43.233333587646, 7.2349619865417, 7.2349619865417)
+Components.RegisterItem("AL-IMP", "AL", {
+	Name        = "Autoloader",
+	Description = "An automatic ammunition loading system.",
+	Model       = "models/acf/autoloader_tractorbeam.mdl",
+	CreateMenu = function(_, Menu)
+		ACF.SetClientData("PrimaryClass", "acf_autoloader")
+		ACF.SetClientData("SecondaryClass", "N/A")
+
+		local MassLabel = Menu:AddLabel("")
+		local AutoloaderSize = Vector(0, 0, 0)
+
+		local function UpdateAutoloaderStats()
+			-- Mass is proportional to volume of the shell
+			local R, H = AutoloaderSize.y, AutoloaderSize.x
+			local Volume = math.pi * R * R * H
+
+			MassLabel:SetText(string.format("Mass : %s", ACF.GetProperMass(Volume * 250)))
+		end
+
+		local CaliberSlider = Menu:AddSlider("Max Caliber (mm)", ACF.MinAutoloaderCaliber, ACF.MaxAutoloaderCaliber, 2)
+		CaliberSlider:SetClientData("AutoloaderCaliber", "OnValueChanged")
+		CaliberSlider:DefineSetter(function(Panel, _, _, Value)
+			local Size = math.Round(Value)
+
+			Panel:SetValue(Size)
+
+			AutoloaderSize.y = Size / RefSize.y / ACF.InchToMm
+			AutoloaderSize.z = Size / RefSize.z / ACF.InchToMm
+
+			UpdateAutoloaderStats()
+
+			return Size
+		end)
+
+		local LengthSlider = Menu:AddSlider("Length (cm)", ACF.MinAutoloaderLength, ACF.MaxAutoloaderLength, 2)
+		LengthSlider:SetClientData("AutoloaderLength", "OnValueChanged")
+		LengthSlider:DefineSetter(function(Panel, _, _, Value)
+			local Length = math.Round(Value)
+
+			Panel:SetValue(Length)
+
+			AutoloaderSize.x = (Length / RefSize.x * 10) / ACF.InchToMm
+
+			UpdateAutoloaderStats()
+
+			return Length
+		end)
+	end
+})

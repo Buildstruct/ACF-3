@@ -193,14 +193,22 @@ local function CreateMenu(Menu)
 
 	Menu:AddTitle("#acf.menu.weapons.settings")
 
-	local ClassBase  = Menu:AddPanel("ACF_Panel")
-	local ClassList  = ClassBase:AddComboBox()
-	local WeaponBase = Menu:AddCollapsible("#acf.menu.weapons.weapon_info", nil, "icon16/monitor_edit.png")
+	-- Weapon Settings Section (collapsible)
+	local WeaponBase = Menu:AddCollapsible("#acf.menu.weapons.weapon_info", true, "icon16/monitor_edit.png")
+
+	-- Weapon type dropdown (inside collapsible)
+	local ClassList  = WeaponBase:AddComboBox()
+	ClassList:SetName("WeaponClassList")
+
+	-- Panel for dynamic controls (caliber slider or weapon list)
+	local ClassBase  = WeaponBase:AddPanel("ACF_Panel")
+
 	local EntName    = WeaponBase:AddTitle()
 	local ClassDesc  = WeaponBase:AddLabel()
 	local EntPreview = WeaponBase:AddModelPreview(nil, true, "Primary")
 	local EntData    = WeaponBase:AddLabel()
 	local BreechIndex = WeaponBase:AddComboBox()
+	BreechIndex:SetName("WeaponBreechIndex")
 	local AmmoList   = ACF.CreateAmmoMenu(Menu)
 
 	-- Configuring the ACF Spawner tool

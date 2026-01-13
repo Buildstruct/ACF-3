@@ -1,6 +1,6 @@
-local ACF     = ACF
-local Classes = ACF.Classes
-local math    = math
+local ACF      = ACF
+local Classes  = ACF.Classes
+local math     = math
 local MM_TO_CM = ACF.MmToInch * ACF.InchToCm -- Millimeters to centimeters
 
 
@@ -237,14 +237,32 @@ function ACF.GetWeaponValue(Key, Caliber, Class, Weapon)
 	return Lerp(Percent, Values.Min, Values.Max)
 end
 
-do -- Ammo crate capacity calculation
+do -- MARK: Ammo capacity
+
+	-- Packing constants
+	local HEX_SPACING = 0.866 -- sqrt(3)/2 for hexagonal packing Y-axis spacing
+	local HEX_OFFSET  = 0.5   -- Z-axis offset for alternating rows
+
+	-- Math functions
+	local floor = math.floor
+	local max   = math.max
+	local cos   = math.cos
+	local sin   = math.sin
+	local rad   = math.rad
+	local pi    = math.pi
 
 	local function GetModelDimensions(Round)
-		if not Round or not (Round.Model or Round.RackModel) then
-			return nil
+		local ModelPath = (not Round.IgnoreRackModel and Round.RackModel) or Round.Model
+
+		-- Use ActualLength and ActualWidth if provided
+		if Round.ActualLength and Round.ActualWidth then
+			local ModelData = ACF.ModelData.GetModelData(ModelPath)
+			local Offset    = ModelData and ModelData.Center and Vector(-ModelData.Center.x, 0, 0) or Vector()
+
+			return Round.ActualLength, Round.ActualWidth, ModelPath, Offset
 		end
 
-		local ModelPath = Round.RackModel or Round.Model
+		-- Use the dimensions of the actual model otherwise
 		local ModelData = ACF.ModelData.GetModelData(ModelPath)
 
 		if not ModelData or not ModelData.Size then
@@ -254,7 +272,7 @@ do -- Ammo crate capacity calculation
 		local Size     = ModelData.Size
 		local Center   = ModelData.Center
 		local Length   = Size.x
-		local Diameter = math.max(Size.y, Size.z)
+		local Diameter = max(Size.y, Size.z)
 		local Offset   = Vector(-Center.x, 0, 0)
 
 		return Length, Diameter, ModelPath, Offset
@@ -273,68 +291,188 @@ do -- Ammo crate capacity calculation
 		end
 
 		Diameter = Caliber * ACF.AmmoCaseScale * MM_TO_CM
-		Length = BulletData.PropLength + BulletData.ProjLength
+		Length   = BulletData.PropLength + BulletData.ProjLength
 
 		return Vector(Length, Diameter, Diameter) / ACF.InchToCm
 	end
 
-	function ACF.GetCrateDimensions(arrangement, roundSize)
-		if arrangement.y == 1 or arrangement.z == 1 then
-			return Vector(arrangement.x, arrangement.y, arrangement.z) * roundSize
+	ACF.GetRoundProperties = GetRoundProperties
+
+	do -- MARK: Box Ammo Crate Functions
+
+		-- Returns true if hex packing uses less space than square packing
+		local function ShouldUseHexPacking(countY, countZ)
+			if countY <= 1 or countZ <= 1 then return false end
+
+			local squareArea = countY * countZ
+			local hexArea    = ((countY - 1) * HEX_SPACING + 1) * (countZ + HEX_OFFSET)
+
+			return hexArea < squareArea
 		end
 
-		local yDimension = (arrangement.y - 1) * roundSize.y * 0.866 + roundSize.y
-		local zDimension = arrangement.z * roundSize.z + roundSize.z * 0.5
+		-- Hex packing given a count and round size
+		local function HexDimY(count, size) return (count - 1) * size * HEX_SPACING + size end
+		local function HexDimZ(count, size) return count * size + size * HEX_OFFSET end
 
-		return Vector(
-			arrangement.x * roundSize.x,
-			yDimension,
-			zDimension
-		)
-	end
+		-- Inverse: how many fit in a given dimension
+		local function HexCountY(dim, size) return floor((dim - size) / (size * HEX_SPACING) + 1) end
+		local function HexCountZ(dim, size) return floor((dim - size * HEX_OFFSET) / size) end
 
-	function ACF.GetCrateSizeFromProjectileCounts(CountX, CountY, CountZ, Class, ToolData, BulletData)
-		local roundSize = GetRoundProperties(Class, ToolData, BulletData)
-		local arrangement = Vector(CountX, CountY, CountZ)
+		function ACF.GetCrateDimensions(arrangement, roundSize)
+			if ShouldUseHexPacking(arrangement.y, arrangement.z) then
+				local dimensions = Vector(
+					arrangement.x * roundSize.x,
+					HexDimY(arrangement.y, roundSize.y),
+					HexDimZ(arrangement.z, roundSize.z)
+				)
 
-		return ACF.GetCrateDimensions(arrangement, roundSize)
-	end
+				return dimensions, true
+			end
 
-	-- Infer projectile counts from a given crate Size (backwards compatibility)
-	-- This inverts ACF.GetCrateSizeFromProjectileCounts using the same packing rules
-	function ACF.GetProjectileCountsFromCrateSize( Size, Class, ToolData, BulletData )
-
-		local roundSize = GetRoundProperties( Class, ToolData, BulletData )
-		local eps = 1e-6
-
-		-- X is always linear in our packing model
-		local countX = math.max( 1, math.floor( ( Size.x + eps ) / math.max( roundSize.x, eps ) ) )
-
-		-- Determine if linear packing applies on Y/Z (either axis count == 1)
-		local yLinear = math.max( 1, math.floor( ( Size.y + eps ) / math.max( roundSize.y, eps ) ) )
-		local zLinear = math.max( 1, math.floor( ( Size.z + eps ) / math.max( roundSize.z, eps ) ) )
-
-		if yLinear == 1 or zLinear == 1 then
-			-- Linear packing in cross-section
-			return countX, yLinear, zLinear
+			return Vector(arrangement.x, arrangement.y, arrangement.z) * roundSize, false
 		end
 
-		-- Hexagonal packing inversion for Y/Z cross-section
-		local hexSpacing = roundSize.y * 0.866 -- sqrt(3)/2
-		local hexOffset  = roundSize.z * 0.5
+		function ACF.GetRoundOffset(x, y, z, roundSize, arrangement)
+			local localX = (x - 1) * roundSize.x
 
-		local countY = 1
-		if Size.y > roundSize.y then
-			countY = math.max( 1, math.floor( ( ( Size.y - roundSize.y ) / math.max( hexSpacing, eps ) ) + 1 + eps ) )
+			if ShouldUseHexPacking(arrangement.y, arrangement.z) then
+				return Vector(
+					localX,
+					(y - 1) * roundSize.y * HEX_SPACING,
+					(z - 1) * roundSize.z + ((y - 1) % 2) * roundSize.z * HEX_OFFSET
+				)
+			end
+
+			return Vector(localX, (y - 1) * roundSize.y, (z - 1) * roundSize.z)
 		end
 
-		local countZ = math.max( 1, math.floor( ( ( Size.z - hexOffset ) / math.max( roundSize.z, eps ) ) + eps ) )
+		function ACF.GetCrateSizeFromProjectileCounts(CountX, CountY, CountZ, Class, ToolData, BulletData)
+			local roundSize = GetRoundProperties(Class, ToolData, BulletData)
 
-		-- Safety: ensure counts are at least 1
-		countY = math.max( 1, countY )
-		countZ = math.max( 1, countZ )
+			return ACF.GetCrateDimensions(Vector(CountX, CountY, CountZ), roundSize)
+		end
 
-		return countX, countY, countZ
+		function ACF.GetMaxCounts(roundSize, maxLength, maxWidth, currentY, currentZ)
+			local maxX       = max(1, floor(maxLength / roundSize.x))
+			local maxYSquare = floor(maxWidth / roundSize.y)
+			local maxZSquare = floor(maxWidth / roundSize.z)
+			local maxYHex    = HexCountY(maxWidth, roundSize.y)
+			local maxZHex    = HexCountZ(maxWidth, roundSize.z)
+
+			local maxY = ShouldUseHexPacking(maxYHex, currentZ) and maxYHex or maxYSquare
+			local maxZ = ShouldUseHexPacking(currentY, maxZHex) and maxZHex or maxZSquare
+
+			return maxX, max(1, maxY), max(1, maxZ)
+		end
+
+		function ACF.GetProjectileCountsFromCrateSize(Size, Class, ToolData, BulletData)
+			local roundSize = GetRoundProperties(Class, ToolData, BulletData)
+			local countX    = max(1, floor(Size.x / roundSize.x))
+			local sqY       = floor(Size.y / roundSize.y)
+			local sqZ       = floor(Size.z / roundSize.z)
+			local hexY      = HexCountY(Size.y, roundSize.y)
+			local hexZ      = HexCountZ(Size.z, roundSize.z)
+
+			if ShouldUseHexPacking(hexY, hexZ) then
+				return countX, max(1, hexY), max(1, hexZ)
+			end
+
+			return countX, max(1, sqY), max(1, sqZ)
+		end
 	end
 
+	do -- MARK: Drums
+		---------------------------------------------------------------------------
+		-- Drum geometry:
+		-- - Rounds are arranged in rings around a central axis (the drum's Z axis)
+		-- - Each round points INWARD with its tip toward the center
+		-- - roundSize: x = length, y = diameter, z = diameter (rounds are cylindrical)
+		-- - The inner radius is where round tips meet
+		-- - The outer radius is innerRadius + roundLength
+		-- - Layers are stacked along Z with hexagonal offset for efficient packing
+		---------------------------------------------------------------------------
+
+		local MIN_ROUNDS_PER_RING = 6
+
+		-- Calculate inner radius from rounds per ring and round diameter
+		local function GetInnerRadius(roundsPerRing, roundDiameter)
+			return (roundsPerRing * roundDiameter) / (2 * pi)
+		end
+
+		-- Calculate drum height from layers and round diameter
+		local function GetDrumHeight(numLayers, roundDiameter)
+			if numLayers <= 1 then return roundDiameter end
+
+			return roundDiameter + (numLayers - 1) * roundDiameter * HEX_SPACING
+		end
+
+		--- Returns the minimum rounds per ring for drum geometry
+		function ACF.GetMinRoundsPerRing()
+			return MIN_ROUNDS_PER_RING
+		end
+
+		function ACF.GetMaxRoundsPerRing(roundSize, maxDiameter)
+			local availableForInner = maxDiameter - 2 * roundSize.x
+
+			if availableForInner <= 0 then return MIN_ROUNDS_PER_RING end
+
+			local maxRounds = floor(availableForInner * pi / roundSize.y)
+
+			return max(MIN_ROUNDS_PER_RING, maxRounds)
+		end
+
+		function ACF.GetMaxDrumLayers(roundSize, maxHeight)
+			local roundDiameter = roundSize.y
+
+			if maxHeight < roundDiameter then return 1 end
+
+			return max(1, floor((maxHeight - roundDiameter) / (roundDiameter * HEX_SPACING) + 1))
+		end
+
+		function ACF.GetDrumDimensions(roundsPerRing, numLayers, roundSize)
+			local roundDiameter = roundSize.y
+			local innerRadius   = GetInnerRadius(roundsPerRing, roundDiameter)
+			local drumDiameter  = (innerRadius + roundSize.x) * 2
+
+			return Vector(drumDiameter, drumDiameter, GetDrumHeight(numLayers, roundDiameter))
+		end
+
+		function ACF.GetDrumRoundOffset(index, roundsPerRing, numLayers, roundSize)
+			local roundLength   = roundSize.x
+			local roundDiameter = roundSize.y
+
+			local ringIndex  = (index - 1) % roundsPerRing
+			local layerIndex = floor((index - 1) / roundsPerRing)
+
+			local innerRadius    = GetInnerRadius(roundsPerRing, roundDiameter)
+			local positionRadius = innerRadius + roundLength / 2
+
+			-- Base angle with hex offset for alternating layers
+			local baseAngle = (ringIndex / roundsPerRing) * 360
+			local angle     = baseAngle + (layerIndex % 2 == 1 and 180 / roundsPerRing or 0)
+
+			-- XY position (drum axis is Z)
+			local angleRad = rad(angle)
+			local x        = cos(angleRad) * positionRadius
+			local y        = sin(angleRad) * positionRadius
+
+			-- Z position
+			local z = 0
+
+			if numLayers > 1 then
+				local drumHeight = GetDrumHeight(numLayers, roundDiameter)
+				z = -drumHeight / 2 + roundDiameter / 2 + layerIndex * roundDiameter * HEX_SPACING
+			end
+
+			-- Round points inward: yaw = angle + 180
+			return Vector(x, y, z), Angle(0, angle + 180, 0)
+		end
+
+
+		function ACF.GetDrumCrateSizeFromProjectileCounts(roundsPerRing, numLayers, Class, ToolData, BulletData)
+			local roundSize = GetRoundProperties(Class, ToolData, BulletData)
+
+			return ACF.GetDrumDimensions(roundsPerRing, numLayers, roundSize)
+		end
+	end
 end
