@@ -24,5 +24,5 @@ hook.Add("Think", "ACF Clock Update", function()
 	Clock.CurTime          = Now
 	Clock.PreciseCurTime   = DbNow
 
-	Run("ACF_OnTick", New, Delta)
+	Run("ACF_OnTick", Now, Delta)
 end)
