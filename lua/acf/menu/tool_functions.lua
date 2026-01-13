@@ -553,8 +553,8 @@ do -- Ghost entity handling
 	local DefaultScale = Vector(1, 1, 1)
 	local ToolEnt
 	local GhostData = {
-		Primary = {Model = "models/props_borealis/bluebarrel001.mdl", Material = "", Scale = Vector(DefaultScale), AbsoluteScale = false},
-		Secondary = {Model = "", Material = "", Scale = Vector(DefaultScale), AbsoluteScale = false},
+		Primary = {Model = "models/props_borealis/bluebarrel001.mdl", Material = "", Scale = Vector(DefaultScale), AbsoluteScale = false, PosOffset = nil, AngOffset = nil},
+		Secondary = {Model = "", Material = "", Scale = Vector(DefaultScale), AbsoluteScale = false, PosOffset = nil, AngOffset = nil},
 	}
 	ACF.GhostEntityData = ACF.GhostEntityData or GhostData
 
@@ -637,6 +637,15 @@ do -- Ghost entity handling
 	function ACF.CreateGhostEntity(Tool)
 		if not ShouldRun then --[[print("not running")]] return end
 
+		local Player = Tool:GetOwner()
+		if not IsValid(Player) then return end
+
+		local CurWeapon = Player:GetActiveWeapon()
+		if not IsValid(CurWeapon) or CurWeapon:GetClass() ~= "gmod_tool" then return end
+
+		local CurTool = Player:GetTool()
+		if not CurTool or CurTool.Name ~= "#tool.acf_menu.menu_name" then return end
+
 		local EntKey  = DrawingSecondary and "Secondary" or "Primary"
 		local EntData = GhostData[EntKey]
 		print("trying to create ghost")
@@ -645,10 +654,10 @@ do -- Ghost entity handling
 		if EntData.Model --[[and EntData.Model ~= ""]] then
 			--print("is valid prop = " .. tostring(util.IsValidProp(EntData.Model)))
 			--if not IsValid(Tool.GhostEntity) then
-				local Trace        = Tool:GetOwner():GetEyeTrace()
+				local Trace        = Player:GetEyeTrace()
 				local HeightOffset = GetModelDimensions(EntData)
-				local Position     = Trace.HitPos + HeightOffset
-				local Angles       = Trace.HitNormal:Angle():Up():Angle()
+				local Position     = Trace.HitPos + HeightOffset + (EntData.PosOffset or vector_origin)
+				local Angles       = Trace.HitNormal:Angle():Up():Angle() + (EntData.AngOffset or angle_zero)
 
 				local GhostEnt = MakeGhostEntity(Tool, EntData.Model, Position, Angles)
 				print(IsValid(GhostEnt))
@@ -703,42 +712,43 @@ do -- Ghost entity handling
 		local ShouldDrawSecondary = Player:KeyDown(IN_SPEED)
 		local SecondaryClass = ACF.GetClientData("SecondaryClass")
 		local UpdateClass = ShouldDrawSecondary and SecondaryClass or ACF.GetClientData("PrimaryClass")
+		local EntKey = DrawingSecondary and "Primary" or "Secondary"
+		local EntData = GhostData[EntKey]
 		local Position, Angles
 
 		if DrawingSecondary ~= ShouldDrawSecondary and SecondaryClass ~= "N/A" then
-			local EntKey = DrawingSecondary and "Primary" or "Secondary"
 			DrawingSecondary = ShouldDrawSecondary
 			print(EntKey)
 			ModifyGhostEntity(GhostEnt, EntKey)
 		end
 
 		if IsValid(TraceEnt) and TraceEnt:GetClass() == UpdateClass then
-			Position = TraceEnt:GetPos()
-			Angles   = TraceEnt:GetAngles()
+			Position = TraceEnt:GetPos() + (EntData.PosOffset or vector_origin)
+			Angles   = TraceEnt:GetAngles() + (EntData.AngOffset or angle_zero)
 		else
 			local HeightOffset = GhostEnt.HeightOffset or vector_origin
-			Position = Trace.HitPos + HeightOffset
-			Angles   = Trace.HitNormal:Angle():Up():Angle()
+			Position = Trace.HitPos + HeightOffset + (EntData.PosOffset or vector_origin)
+			Angles   = Trace.HitNormal:Angle():Up():Angle() + (EntData.AngOffset or angle_zero)
 		end
 
 		GhostEnt:SetPos(Position)
 		GhostEnt:SetAngles(Angles)
 	end
 
-	function ACF.ReleaseGhostEntity() --(Tool)
+	function ACF.ReleaseGhostEntity(Tool)
 		if not ShouldRun then return end
 
-		--if IsValid(Tool.GhostEntity) then
+		if IsValid(Tool.GhostEntity) then
 			print("releasing")
-			--Tool:ReleaseGhostEntity()
-		--end
+			Tool:ReleaseGhostEntity()
+		end
 	end
 
 	hook.Add("ACF_OnUpdateClientData", "ACF_HandleGhostEntities", function(_, Key)
 		if Key ~= "Primary" and Key ~= "Secondary" then return end
 
 		--if Value == "N/A" then
-			ACF.UpdateGhostEntity({[Key] = {Model = "", Material = "", Scale = DefaultScale, AbsoluteScale = false}})
+			ACF.UpdateGhostEntity({[Key] = {Model = "", Material = "", Scale = DefaultScale, AbsoluteScale = false, PosOffset = nil, AngOffset = nil}})
 		--end
 	end)
 end

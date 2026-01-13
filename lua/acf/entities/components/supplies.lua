@@ -16,7 +16,7 @@ Components.Register("SP-RFL", {
 Components.RegisterItem("RFL-UNIT", "SP-RFL", {
 	Name        = "Supply Crate",
 	Description = "A scalable container that supplies fuel and ammo.",
-	Model       = "models/holograms/hq_rcube_thin.mdl",
+	Model       = "models/acf/core/s_fuel.mdl",
 	Material    = "phoenix_storms/future_vents",
 	Preview = {FOV = 120},
 	CreateMenu = function(_, Menu)
@@ -62,9 +62,17 @@ Components.RegisterItem("RFL-UNIT", "SP-RFL", {
 			local TransferRate = ACF.SupplyMassRate * (Volume / 1000)
 
 			CapacityLabel:SetText(string.format("Capacity : %s kg\nEmpty Mass : %s kg\nTransfer Rate : %s kg/s", math.Round(Capacity, 2), math.Round(EmptyMass, 2), math.Round(TransferRate, 2)))
+
+			if Menu.ComponentPreview then
+				Menu.ComponentPreview:SetModelScale(SupplySize)
+			end
 		end
 
 		function SupplyShape:OnSelect(_, _, Data)
+			if Menu.ComponentPreview then
+				Menu.ComponentPreview:UpdateModel(ACF.ContainerShapeModels[Data] or "models/acf/core/s_fuel.mdl", "phoenix_storms/future_vents")
+			end
+
 			ACF.SetClientData("SupplyShape", Data)
 			UpdateSupplyText()
 		end

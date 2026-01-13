@@ -24,6 +24,7 @@ local function CreateMenu(Menu)
 	local ComponentName = Base:AddTitle()
 	local ComponentDesc = Base:AddLabel()
 	local ComponentPreview = Base:AddModelPreview(nil, true, "Primary")
+	Base.ComponentPreview = ComponentPreview
 
 	function ComponentClass:OnSelect(Index, _, Data)
 		if self.Selected == Data then return end

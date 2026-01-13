@@ -69,6 +69,7 @@ do -- Piledrivers menu
 			BulletData = Ammo:ClientConvert(ACF.GetAllClientData())
 
 			Panel:SetValue(Value)
+			ClassPreview:SetModelScale(Scale, true)
 
 			return Value
 		end)

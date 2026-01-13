@@ -1,15 +1,5 @@
 local ACF = ACF
---[[
-local GridMaterial = CreateMaterial("acf_bp_vis_grid2", "UnlitGeneric", {
-	["$basetexture"] = "hunter/myplastic",
-	["$model"] = 1,
-	["$translucent"] = 1,
-	["$vertexalpha"] = 1,
-	["$vertexcolor"] = 1
-})
-]]
 local BaseplateTypes = ACF.Classes.BaseplateTypes
-local BaseplateScale = Vector(1, 1, 1)
 
 local function CreateMenu(Menu)
 	ACF.SetToolMode("acf_menu", "Spawner", "Baseplate")
@@ -37,15 +27,17 @@ local function CreateMenu(Menu)
 	local PreviewSettings = {
 		FOV = 120,
 		Height = 120,
+		AngOffset = Angle(0, -90, 0),
 	}
 	local BaseplatePreview = BaseplateBase:AddModelPreview("models/holograms/cube.mdl", true, "Primary")
 	BaseplatePreview:UpdateSettings(PreviewSettings)
+	BaseplatePreview:UpdateModel("models/holograms/cube.mdl", "hunter/myplastic")
 
 	BaseplateName.ACF_OnUpdate = function(self, KeyChanged, _, Value) if KeyChanged == "BaseplateType" then self:SetText(Value.Name) end end
 	BaseplateDesc.ACF_OnUpdate = function(self, KeyChanged, _, Value) if KeyChanged == "BaseplateType" then self:SetText(Value.Description) end end
 	GForceTicks.ACF_OnUpdate   = function(self, KeyChanged, _, Value)
 		if KeyChanged == "BaseplateType" then
-			self:SetVisible(Value == ACF.Classes.BaseplateTypes.Get("Aircraft"))
+			self:SetVisible(Value == BaseplateTypes.Get("Aircraft"))
 			self:GetParent():InvalidateLayout()
 		end
 	end
@@ -60,22 +52,6 @@ local function CreateMenu(Menu)
 	SizeY.ACF_OnUpdate = ProducerSelfUpdate
 	SizeZ.ACF_OnUpdate = ProducerSelfUpdate
 	UpdatePreviewSize()
-
-	--[[local Vis = BaseplateBase:AddPanel("DPanel")
-	Vis:SetSize(30, 256)
-
-	function Vis:Paint(ScrW, ScrH)
-		local W, H = SizeX:GetValue(), SizeY:GetValue()
-		self.CamDistance = math.max(W, H, 60) * 1
-
-		local Z = (math.max(1, ScrH / H) / math.max(1, ScrW / W)) * 2
-		surface.SetDrawColor(255, 255, 255)
-		surface.SetMaterial(GridMaterial)
-		surface.DrawTexturedRectRotated(ScrW / 2, ScrH / 2, W * Z, H * Z, 0)
-
-		surface.SetDrawColor(255, 70, 70); surface.DrawRect((ScrW / 2) - 1, ScrH / 2, 3, H / 2 * Z)
-		surface.SetDrawColor(70, 255, 70); surface.DrawRect(ScrW / 2, (ScrH / 2) - 1, W / 2 * Z, 3)
-	end]]
 
 	local BaseplateConvertInfo = Menu:AddCollapsible("#acf.menu.baseplates.convert")
 	local BaseplateConvertText = ""

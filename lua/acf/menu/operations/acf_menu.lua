@@ -240,8 +240,8 @@ do -- Generic Spawner/Linker operation creator
 					-- The call to SelectEntity will switch the mode to the linker
 					return SelectEntity(Entity, Name, Tool)
 				end,
-				--OnDeploy     = ACF.CreateGhostEntity,
-				--OnHolster    = ACF.ReleaseGhostEntity,
+				OnDeploy     = ACF.CreateGhostEntity,
+				OnHolster    = ACF.ReleaseGhostEntity,
 				OnEnterOp    = ACF.CreateGhostEntity,
 				OnExitOp     = ACF.ReleaseGhostEntity,
 				OnThink      = ACF.RenderGhostEntity,

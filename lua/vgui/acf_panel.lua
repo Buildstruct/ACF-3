@@ -1033,7 +1033,7 @@ function PANEL:AddModelPreview(Model, Rotate, GhostEntClass)
 
 		if GhostEntClass == "Primary" or GhostEntClass == "Secondary" then
 			local GhostData = {
-				[GhostEntClass] = {Model = Path, Material = Material or "", Scale = self.ModelScale or Vector(1, 1, 1)}
+				[GhostEntClass] = {Model = Path, Material = Material or "", Scale = self.ModelScale or Vector(1, 1, 1), PosOffset = self.GhostPosOffset, AngOffset = self.GhostAngOffset}
 			}
 			print("updated model")
 			ACF.UpdateGhostEntity(GhostData)
@@ -1045,6 +1045,8 @@ function PANEL:AddModelPreview(Model, Rotate, GhostEntClass)
 
 		self:SetHeight(Data and Data.Height or Settings.Height)
 		self:SetFOV(Data and Data.FOV or self.DefaultFOV)
+		self.GhostPosOffset = Data and Data.PosOffset
+		self.GhostAngOffset = Data and Data.AngOffset
 	end
 
 	function Panel:OnMousePressed(Button)
