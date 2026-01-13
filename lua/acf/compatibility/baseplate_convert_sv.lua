@@ -88,10 +88,11 @@ function ACF.ConvertBaseplate(Player, Target)
         return false, "Incompatible entity class '" .. Target:GetClass() .. "'"
     end
 
+    -- Compute box size
     local AMi, AMa = PhysObj:GetAABB()
     local BoxSize = AMa - AMi
 
-    -- Duplicate the entire thing
+    -- Determine which entities to area copy
     local EntsByIndex = {}
     local Contraption = Target:GetContraption()
     if Contraption then
@@ -102,13 +103,14 @@ function ACF.ConvertBaseplate(Player, Target)
         EntsByIndex[Target:EntIndex()] = Target
     end
 
+    -- Perform the area copy and retrieve the dupe table
     local Entities, Constraints = AdvDupe2.duplicator.AreaCopy(Player, EntsByIndex, vector_origin, false)
 
-    -- Find the baseplate
+    -- Find the baseplate in the dupe table
     local Baseplate = Entities[Target:EntIndex()]
 
     if PropToBaseplate then
-        -- Prop to baseplate
+        -- Prop to baseplate conversion
         local foundTranslation
         local targetModel = Target:GetModel()
 
@@ -142,7 +144,7 @@ function ACF.ConvertBaseplate(Player, Target)
             ACF.SendNotify(Player, false, foundTranslation.warning)
         end
     elseif BaseplateToProp then
-        -- Baseplate to prop
+        -- Baseplate to prop conversion
         local Model, _ = DimToModel(math.Round(BoxSize.x, 2), math.Round(BoxSize.y, 2), math.Round(BoxSize.z, 2))
 
         local Baseplate = Entities[Target:EntIndex()]
@@ -159,8 +161,8 @@ function ACF.ConvertBaseplate(Player, Target)
         if IsValid(e) then e:Remove() end
     end
 
-    -- Paste the stuff back to the dupe
-    local Ents = AdvDupe2.duplicator.Paste(Owner, Entities, Constraints, vector_origin, angle_zero, vector_origin, true)
+    -- Paste the modified dupe
+    AdvDupe2.duplicator.Paste(Owner, Entities, Constraints, vector_origin, angle_zero, vector_origin, true)
 
     return true
 end
