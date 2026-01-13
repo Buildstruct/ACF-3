@@ -30,9 +30,9 @@ local SpropsPain = {
     [84] = {String = "84", Size = "84", Rect = "cube"},
     [90] = {String = "90", Size = "90", Rect = "cube"},
     [96] = {String = "96", Size = "6", Rect = "cube"},
-    [108] = {String = "108", Size = "108", Rect = "cube"},
-    [120] = {String = "120", Size = "120", Rect = "cube"},
-    [132] = {String = "132", Size = "132", Rect = "cube"},
+    [108] = {String = "108", Size = nil, Rect = "cube"},
+    [120] = {String = "120", Size = nil, Rect = "cube"},
+    [132] = {String = "132", Size = nil, Rect = "cube"},
     [144] = {String = "144", Size = "7", Rect = "cube"},
     [192] = {String = "192", Size = "8", Rect = "cube"},
     [240] = {String = "240", Size = "9", Rect = "cube"},
@@ -148,10 +148,11 @@ function ACF.ConvertBaseplate(Player, Target)
         local Model, _ = DimToModel(math.Round(BoxSize.x, 2), math.Round(BoxSize.y, 2), math.Round(BoxSize.z, 2))
 
         local Baseplate = Entities[Target:EntIndex()]
+        PrintTable(Baseplate)
         Baseplate.Class = "prop_physics"
         Baseplate.Model = Model
         Baseplate.ACF_UserData = nil
-        Baseplate.EntityMods = {}
+        Baseplate.EntityMods.LuaSeatID = nil
         if IsValid(Target.Pod) then Entities[Target.Pod:EntIndex()] = nil end
     end
 
