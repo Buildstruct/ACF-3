@@ -370,11 +370,11 @@ ACF.CreateMenuOperation("Baseplate", "baseplate", nil, {
 	Text = "Attempts to convert the target entity into a baseplate.",
 	Func = function(Tool, Trace)
 		if CLIENT then return end
-		local success, msg = ACF.ConvertEntityToBaseplate(Tool.SWEP:GetOwner(), Trace.Entity)
+		local success, msg = ACF.ConvertBaseplate(Tool.SWEP:GetOwner(), Trace.Entity)
 		if not success then
-			ACF.SendNotify(Tool:GetOwner(), err, "[ACF] Could not convert baseplate: " .. msg)
+			ACF.SendNotify(Tool:GetOwner(), false, "Could not convert baseplate: " .. msg)
 		else
-			ACF.SendNotify(Tool:GetOwner(), true, "[ACF] Successfully converted entity to baseplate.")
+			ACF.SendNotify(Tool:GetOwner(), true, "Successfully converted entity to baseplate.")
 		end
 	end
 })
