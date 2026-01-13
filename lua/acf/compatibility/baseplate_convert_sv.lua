@@ -148,7 +148,6 @@ function ACF.ConvertBaseplate(Player, Target)
         if not Model then return false, Error end
 
         local Baseplate = Entities[Target:EntIndex()]
-        PrintTable(Baseplate)
         Baseplate.Class = "prop_physics"
         Baseplate.Model = Model
         Baseplate.ACF_UserData = nil
