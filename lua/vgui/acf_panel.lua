@@ -953,8 +953,7 @@ function PANEL:AddModelPreview(Model, Rotate, GhostEntClass)
 		local BoxSize = self.BoxSize
 		local BaseCamDistance = 1.2 * math.max(BoxSize.x, math.max(BoxSize.y, BoxSize.z))
 		self.CamDistance = BaseCamDistance + math.max(Scale.x, math.max(Scale.y, Scale.z))
-		print("ok so the EVIL scale here is " .. tostring(Scale) .. " and also we got the NEFARIOUS " .. tostring(BoxSize))
-		print("and then we got our freakin " .. tostring(Scale / BoxSize))
+
 		local Entity = self:GetEntity()
 		Scale = AbsoluteScale and Scale or Scale / BoxSize
 		self.ScaleMatrix = Matrix()
@@ -1035,7 +1034,7 @@ function PANEL:AddModelPreview(Model, Rotate, GhostEntClass)
 			local GhostData = {
 				[GhostEntClass] = {Model = Path, Material = Material or "", Scale = self.ModelScale or Vector(1, 1, 1), PosOffset = self.GhostPosOffset, AngOffset = self.GhostAngOffset}
 			}
-			print("updated model")
+
 			ACF.UpdateGhostEntity(GhostData)
 		end
 	end

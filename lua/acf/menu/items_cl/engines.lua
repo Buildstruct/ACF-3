@@ -156,7 +156,6 @@ local function CreateMenu(Menu)
 		Panel:SetValue(Z)
 
 		TankSize.z = Z
-		print("TANKSIZE", TankSize)
 
 		FuelType:UpdateFuelText()
 

@@ -19,7 +19,7 @@ local function UpdatePreview(Base, Data)
 	-- Set scale to 1 if Weapon exists (non scaled lmao), or relative caliber otherwise
 	local Scale   = Weapon and 1 or (Caliber / Class.Caliber.Base * (Class.ScaleFactor or 1))
 	local Preview = Base.Preview
-	print(tostring(Scale) .. " with " .. tostring(Caliber))
+
 	Preview:SetModelScale(Scale, true)
 end
 

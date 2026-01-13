@@ -611,8 +611,7 @@ do -- Ghost entity handling
 
 			HeightOffset.z = (Scale.z * ModelSize.z) / 2
 		end
-		-- print("scale set = " .. tostring(Scale) .. " with AbsoluteScale = " .. tostring(EntData.AbsoluteScale))
-		--print(HeightOffset)
+
 		return HeightOffset, ModelSize, Scale
 	end
 
@@ -635,7 +634,7 @@ do -- Ghost entity handling
 	end
 
 	function ACF.CreateGhostEntity(Tool)
-		if not ShouldRun then --[[print("not running")]] return end
+		if not ShouldRun then return end
 
 		local Player = Tool:GetOwner()
 		if not IsValid(Player) then return end
@@ -648,27 +647,23 @@ do -- Ghost entity handling
 
 		local EntKey  = DrawingSecondary and "Secondary" or "Primary"
 		local EntData = GhostData[EntKey]
-		print("trying to create ghost")
-		--print("first time predicted = " .. tostring(IsFirstTimePredicted()))
-		PrintTable(EntData)
+
 		if EntData.Model --[[and EntData.Model ~= ""]] then
-			--print("is valid prop = " .. tostring(util.IsValidProp(EntData.Model)))
 			--if not IsValid(Tool.GhostEntity) then
 				local Trace        = Player:GetEyeTrace()
 				local HeightOffset = GetModelDimensions(EntData)
 				local Position     = Trace.HitPos + HeightOffset + (EntData.PosOffset or vector_origin)
 				local Angles       = Trace.HitNormal:Angle():Up():Angle() + (EntData.AngOffset or angle_zero)
 
-				local GhostEnt = MakeGhostEntity(Tool, EntData.Model, Position, Angles)
-				print(IsValid(GhostEnt))
+				MakeGhostEntity(Tool, EntData.Model, Position, Angles)
 			--end
 
 			timer.Simple(0, function()
 				local GhostEnt = Tool.GhostEntity
-				if not IsValid(GhostEnt) then print("failed to create") return end
-				print(EntKey)
+				if not IsValid(GhostEnt) then return end
+
 				ToolEnt = Tool
-				print(Tool)
+
 				ModifyGhostEntity(GhostEnt, EntKey)
 			end)
 		end
@@ -680,20 +675,18 @@ do -- Ghost entity handling
 		for EntKey, EntData in pairs(NewGhostData) do
 			for DataKey, DataVal in pairs(EntData) do
 				GhostData[EntKey][DataKey] = DataVal
-				print("GhostData[" .. tostring(EntKey) .. "][" .. tostring(DataKey) .. "] = " .. tostring(DataVal))
 			end
 		end
 
 		timer.Simple(0, function()
 			local EntKey = DrawingSecondary and "Secondary" or "Primary"
-			if not ToolEnt then print("no toolent " .. tostring(ToolEnt)) return end
+			if not ToolEnt then return end
 
 			if not IsValid(ToolEnt.GhostEntity) then
 				--ACF.CreateGhostEntity(ToolEnt)
 				return
 			end
 
-			-- print("running update")
 			ModifyGhostEntity(ToolEnt.GhostEntity, EntKey)
 		end)
 	end
@@ -718,7 +711,6 @@ do -- Ghost entity handling
 
 		if DrawingSecondary ~= ShouldDrawSecondary and SecondaryClass ~= "N/A" then
 			DrawingSecondary = ShouldDrawSecondary
-			print(EntKey)
 			ModifyGhostEntity(GhostEnt, EntKey)
 		end
 
@@ -739,7 +731,6 @@ do -- Ghost entity handling
 		if not ShouldRun then return end
 
 		if IsValid(Tool.GhostEntity) then
-			print("releasing")
 			Tool:ReleaseGhostEntity()
 		end
 	end
