@@ -758,8 +758,8 @@ end ----------------------------------------------------
 do -- Overlay Text -------------------------------------
 	function ENT:ACF_UpdateOverlayState(State)
 		local Final     = ACF.ConvertGearRatio(self.FinalDrive, self.GearboxLegacyRatio)
-		local Torque    = math.Round(self.MaxTorque * ACF.NmToFtLb)
-		local Output    = math.Round(self.TorqueOutput * ACF.NmToFtLb)
+		local Torque    = math.Round(self.MaxTorque * ACF.TorqueMult * ACF.NmToFtLb)
+		local Output    = math.Round(self.TorqueOutput * ACF.TorqueMult * ACF.NmToFtLb)
 
 		if not GearsText or GearsText == "" then
 			local Gears = self.Gears
@@ -789,8 +789,8 @@ do -- Overlay Text -------------------------------------
 		State:AddDivider()
 		State:AddNumber("Final Drive", Final)
 		State:AddKeyValue("Ratio", RatioFormat)
-		State:AddKeyValue("Torque Rating", ("%s Nm / %s ft-lb"):format(self.MaxTorque, Torque))
-		State:AddKeyValue("Torque Output", ("%s Nm / %s ft-lb"):format(math.floor(self.TorqueOutput), Output))
+		State:AddKeyValue("Torque Rating", ("%s Nm / %s ft-lb"):format(math.Round(self.MaxTorque * ACF.TorqueMult), Torque))
+		State:AddKeyValue("Torque Output", ("%s Nm / %s ft-lb"):format(math.floor(self.TorqueOutput * ACF.TorqueMult), Output))
 	end
 end ----------------------------------------------------
 

@@ -11,13 +11,13 @@ local IdleColor   = Color(127, 0, 0)
 local function UpdateEngineStats(Label, Data)
 	local RPM        = Data.RPM
 	local PeakTqRPM  = math.Round(Data.PeakTqRPM)
-	local PeakkW     = Data.PeakPower
+	local PeakkW     = Data.PeakPower * ACF.TorqueMult
 	local PeakkWRPM  = Data.PeakPowerRPM
 	local MinPower   = RPM.PeakMin
 	local MaxPower   = RPM.PeakMax
 	local Mass       = ACF.GetProperMass(Data.Mass)
-	local Torque     = math.Round(Data.Torque)
-	local TorqueFeet = math.Round(Data.Torque * ACF.NmToFtLb)
+	local Torque     = math.Round(Data.Torque * ACF.TorqueMult)
+	local TorqueFeet = math.Round(Data.Torque * ACF.TorqueMult * ACF.NmToFtLb)
 	local Type       = EngineTypes.Get(Data.Type)
 	local Efficiency = Type.Efficiency
 	local FuelList   = ""
@@ -209,19 +209,19 @@ local function CreateMenu(Menu)
 		UpdateEngineStats(EngineStats, Data)
 
 		PowerGraph:SetXRange(0, Data.RPM.Limit)
-		PowerGraph:SetYRange(0, math.max(math.ceil(Data.PeakPower * ACF.KwToHp), Data.Torque) * 1.1)
+		PowerGraph:SetYRange(0, math.max(math.ceil(Data.PeakPower * ACF.TorqueMult * ACF.KwToHp), Data.Torque * ACF.TorqueMult) * 1.1)
 		PowerGraph:SetFidelity(10)
 
 		PowerGraph:Clear()
-		PowerGraph:PlotPoint(language.GetPhrase("acf.menu.engines.peak_hp"), Data.PeakPowerRPM, math.Round(Data.PeakPower * ACF.KwToHp), HPColor)
-		PowerGraph:PlotPoint(language.GetPhrase("acf.menu.engines.peak_nm"), Data.PeakTqRPM, math.Round(Data.Torque), TorqueColor)
+		PowerGraph:PlotPoint(language.GetPhrase("acf.menu.engines.peak_hp"), Data.PeakPowerRPM, math.Round(Data.PeakPower * ACF.TorqueMult * ACF.KwToHp), HPColor)
+		PowerGraph:PlotPoint(language.GetPhrase("acf.menu.engines.peak_nm"), Data.PeakTqRPM, math.Round(Data.Torque * ACF.TorqueMult), TorqueColor)
 
 		PowerGraph:PlotLimitFunction(language.GetPhrase("acf.menu.engines.torque"), Data.RPM.Idle, Data.RPM.Limit, TorqueColor, function(X)
-			return ACF.GetTorque(Data.TorqueCurve, math.Remap(X, Data.RPM.Idle, Data.RPM.Limit, 0, 1)) * Data.Torque
+			return ACF.GetTorque(Data.TorqueCurve, math.Remap(X, Data.RPM.Idle, Data.RPM.Limit, 0, 1)) * Data.Torque * ACF.TorqueMult
 		end)
 
 		PowerGraph:PlotLimitFunction(language.GetPhrase("acf.menu.engines.hp"), Data.RPM.Idle, Data.RPM.Limit, HPColor, function(X)
-			return (ACF.GetTorque(Data.TorqueCurve, math.Remap(X, Data.RPM.Idle, Data.RPM.Limit, 0, 1)) * Data.Torque * X) * ACF.KwToHp / 9548.8
+			return (ACF.GetTorque(Data.TorqueCurve, math.Remap(X, Data.RPM.Idle, Data.RPM.Limit, 0, 1)) * Data.Torque * ACF.TorqueMult * X) * ACF.KwToHp / 9548.8
 		end)
 
 		PowerGraph:PlotLimitLine(language.GetPhrase("acf.menu.engines.idle_rpm"), false, Data.RPM.Idle, IdleColor)

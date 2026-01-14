@@ -523,7 +523,7 @@ end
 function ENT:UpdateOutputs(SelfTbl)
 	SelfTbl = SelfTbl or self:GetTable()
 	local FuelUsage = Round(SelfTbl.FuelUsage)
-	local Torque    = SelfTbl.Torque
+	local Torque    = SelfTbl.Torque * ACF.TorqueMult
 	local FlyRPM    = SelfTbl.FlyRPM
 	local Power     = Round(Torque * FlyRPM / 9548.8)
 
@@ -557,8 +557,8 @@ function ENT:ACF_UpdateOverlayState(State)
 		State:AddWarning("Idle")
 	end
 	State:AddKeyValue("Type", self.Name)
-	State:AddKeyValue("Power", ("%s kW / %s hp"):format(Round(self.PeakPower), Round(self.PeakPower * ACF.KwToHp)))
-	State:AddKeyValue("Torque", ("%s Nm / %s ft-lb"):format(Round(self.PeakTorque), Round(self.PeakTorque * ACF.NmToFtLb)))
+	State:AddKeyValue("Power", ("%s kW / %s hp"):format(Round(self.PeakPower * ACF.TorqueMult), Round(self.PeakPower * ACF.TorqueMult * ACF.KwToHp)))
+	State:AddKeyValue("Torque", ("%s Nm / %s ft-lb"):format(Round(self.PeakTorque * ACF.TorqueMult), Round(self.PeakTorque * ACF.TorqueMult * ACF.NmToFtLb)))
 	State:AddKeyValue("Powerband", ("%s - %s RPM"):format(self.PeakMinRPM, self.PeakMaxRPM))
 	State:AddKeyValue("Redline", ("%s RPM"):format(self.LimitRPM))
 end
