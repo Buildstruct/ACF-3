@@ -547,8 +547,7 @@ end
 
 do -- Ghost entity handling
 	local ModelData = ACF.ModelData
-	local IsSinglePlayer = game.SinglePlayer()
-	local ShouldRun = not (SERVER and not IsSinglePlayer) and not (CLIENT and IsSinglePlayer)
+	local ShouldRun = not SERVER
 	local DrawingSecondary = false
 	local DefaultScale = Vector(1, 1, 1)
 	local ToolEnt
