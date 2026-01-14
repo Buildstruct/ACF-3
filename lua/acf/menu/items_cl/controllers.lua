@@ -13,7 +13,7 @@ local function CreateMenu(Menu)
 		FOV = 120,
 		Height = 120,
 	}
-	local Preview = Menu:AddModelPreview("models/hunter/plates/plate025x025.mdl", true)
+	local Preview = Menu:AddModelPreview("models/hunter/plates/plate025x025.mdl", true, "Primary")
 	Preview:UpdateSettings(PreviewSettings)
 
 	local Instructions = Menu:AddCollapsible("Instructions", true, "icon16/computer_add.png")

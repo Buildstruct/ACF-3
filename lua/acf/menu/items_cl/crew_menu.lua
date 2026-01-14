@@ -177,7 +177,7 @@ local function CreateMenu(Menu)
 
 	local Base			= Menu:AddCollapsible("#acf.menu.crew.crew_info", nil, "icon16/group_edit.png")
 	local CrewName		= Base:AddTitle()
-	local CrewPreview	= Base:AddModelPreview(nil, true)
+	local CrewPreview	= Base:AddModelPreview(nil, true, "Primary")
 	local ReplaceOthers	= Base:AddCheckBox("#acf.menu.crew.replace_others")
 	local ReplaceSelf	= Base:AddCheckBox("#acf.menu.crew.replace_self")
 	local UseAnimation	= Base:AddCheckBox("#acf.menu.crew.use_animation")

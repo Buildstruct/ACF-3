@@ -544,3 +544,202 @@ do -- Clientside Tool interaction
 		end
 	end
 end
+
+do -- Ghost entity handling
+	local ModelData = ACF.ModelData
+	local IsSinglePlayer = game.SinglePlayer()
+	local ShouldRun = not (SERVER and not IsSinglePlayer) and not (CLIENT and IsSinglePlayer)
+	local DrawingSecondary = false
+	local DefaultScale = Vector(1, 1, 1)
+	local ToolEnt
+	local GhostData = {
+		Primary = {Model = "models/props_borealis/bluebarrel001.mdl", Material = "", Scale = Vector(DefaultScale), AbsoluteScale = false, PosOffset = nil, AngOffset = nil},
+		Secondary = {Model = "", Material = "", Scale = Vector(DefaultScale), AbsoluteScale = false, PosOffset = nil, AngOffset = nil},
+	}
+	ACF.GhostEntityData = ACF.GhostEntityData or GhostData
+
+	local function MakeGhostEntity(Tool, Model, Position, Angles)
+		-- Release the old ghost entity
+		Tool:ReleaseGhostEntity()
+
+		-- Don't allow ragdolls/effects to be ghosts
+		if not util.IsValidProp(Model) then return end
+
+		if CLIENT then
+			Tool.GhostEntity = ents.CreateClientProp(Model)
+		else
+			Tool.GhostEntity = ents.Create("prop_physics")
+		end
+
+		-- If there's too many entities we might not spawn..
+		if not IsValid(Tool.GhostEntity) then
+			Tool.GhostEntity = nil
+			return
+		end
+
+		Tool.GhostEntity:SetModel(Model)
+		Tool.GhostEntity:SetPos(Position)
+		Tool.GhostEntity:SetAngles(Angles)
+		Tool.GhostEntity:Spawn()
+
+		-- We do not want physics at all
+		Tool.GhostEntity:PhysicsDestroy()
+
+		Tool.GhostEntity:SetMoveType(MOVETYPE_NONE)
+		Tool.GhostEntity:SetNotSolid(true)
+		Tool.GhostEntity:SetRenderMode(RENDERMODE_TRANSCOLOR)
+		Tool.GhostEntity:SetColor(Color(255, 255, 255, 150))
+
+		-- Do not save this thing in saves/dupes
+		Tool.GhostEntity.DoNotDuplicate = true
+
+		-- Mark this entity as ghost prop for other code
+		Tool.GhostEntity.IsToolGhost = true
+
+		return Tool.GhostEntity
+	end
+
+	local function GetModelDimensions(EntData)
+		local Scale = EntData.Scale
+		local ModelSize = ModelData.GetModelSize(EntData.Model)
+		local HeightOffset = Vector(0, 0, ModelSize.z / 2)
+
+		if Scale and not Scale:IsEqualTol(DefaultScale, 0) then
+			if not EntData.AbsoluteScale then
+				Scale = Scale / ModelSize
+			end
+
+			HeightOffset.z = (Scale.z * ModelSize.z) / 2
+		end
+
+		return HeightOffset, ModelSize, Scale
+	end
+
+	local function ModifyGhostEntity(GhostEnt, EntKey)
+		local EntData = GhostData[EntKey]
+		GhostEnt:SetModel(EntData.Model)
+
+		local Scale = EntData.Scale
+		GhostEnt.HeightOffset, GhostEnt.ModelSize, Scale = GetModelDimensions(EntData)
+
+		if Scale then
+			local ScaleMatrix = Matrix()
+			ScaleMatrix:Scale(Scale)
+			GhostEnt:EnableMatrix("RenderMultiply", ScaleMatrix)
+		end
+
+		if EntData.Material then
+			GhostEnt:SetMaterial(EntData.Material)
+		end
+	end
+
+	function ACF.CreateGhostEntity(Tool)
+		if not ShouldRun then return end
+
+		local Player = Tool:GetOwner()
+		if not IsValid(Player) then return end
+
+		local CurWeapon = Player:GetActiveWeapon()
+		if not IsValid(CurWeapon) or CurWeapon:GetClass() ~= "gmod_tool" then return end
+
+		local CurTool = Player:GetTool()
+		if not CurTool or CurTool.Name ~= "#tool.acf_menu.menu_name" then return end
+
+		local EntKey  = DrawingSecondary and "Secondary" or "Primary"
+		local EntData = GhostData[EntKey]
+
+		if EntData.Model --[[and EntData.Model ~= ""]] then
+			--if not IsValid(Tool.GhostEntity) then
+				local Trace        = Player:GetEyeTrace()
+				local HeightOffset = GetModelDimensions(EntData)
+				local Position     = Trace.HitPos + HeightOffset + (EntData.PosOffset or vector_origin)
+				local Angles       = Trace.HitNormal:Angle():Up():Angle() + (EntData.AngOffset or angle_zero)
+
+				MakeGhostEntity(Tool, EntData.Model, Position, Angles)
+			--end
+
+			timer.Simple(0, function()
+				local GhostEnt = Tool.GhostEntity
+				if not IsValid(GhostEnt) then return end
+
+				ToolEnt = Tool
+
+				ModifyGhostEntity(GhostEnt, EntKey)
+			end)
+		end
+	end
+
+	function ACF.UpdateGhostEntity(NewGhostData)
+		if not ShouldRun or not istable(NewGhostData) then return end
+
+		for EntKey, EntData in pairs(NewGhostData) do
+			for DataKey, DataVal in pairs(EntData) do
+				GhostData[EntKey][DataKey] = DataVal
+			end
+		end
+
+		timer.Simple(0, function()
+			local EntKey = DrawingSecondary and "Secondary" or "Primary"
+			if not ToolEnt then return end
+
+			if not IsValid(ToolEnt.GhostEntity) then
+				--ACF.CreateGhostEntity(ToolEnt)
+				return
+			end
+
+			ModifyGhostEntity(ToolEnt.GhostEntity, EntKey)
+		end)
+	end
+
+	function ACF.RenderGhostEntity(Tool)
+		if not ShouldRun then return end
+
+		local GhostEnt = Tool.GhostEntity
+		if not IsValid(GhostEnt) then return end
+
+		local Player = Tool:GetOwner()
+		if not IsValid(Player) then return end
+
+		local Trace = Player:GetEyeTrace()
+		local TraceEnt = Trace.Entity
+		local ShouldDrawSecondary = Player:KeyDown(IN_SPEED)
+		local SecondaryClass = ACF.GetClientData("SecondaryClass")
+		local UpdateClass = ShouldDrawSecondary and SecondaryClass or ACF.GetClientData("PrimaryClass")
+		local EntKey = DrawingSecondary and "Primary" or "Secondary"
+		local EntData = GhostData[EntKey]
+		local Position, Angles
+
+		if DrawingSecondary ~= ShouldDrawSecondary and SecondaryClass ~= "N/A" then
+			DrawingSecondary = ShouldDrawSecondary
+			ModifyGhostEntity(GhostEnt, EntKey)
+		end
+
+		if IsValid(TraceEnt) and TraceEnt:GetClass() == UpdateClass then
+			Position = TraceEnt:GetPos() + (EntData.PosOffset or vector_origin)
+			Angles   = TraceEnt:GetAngles() + (EntData.AngOffset or angle_zero)
+		else
+			local HeightOffset = GhostEnt.HeightOffset or vector_origin
+			Position = Trace.HitPos + HeightOffset + (EntData.PosOffset or vector_origin)
+			Angles   = Trace.HitNormal:Angle():Up():Angle() + (EntData.AngOffset or angle_zero)
+		end
+
+		GhostEnt:SetPos(Position)
+		GhostEnt:SetAngles(Angles)
+	end
+
+	function ACF.ReleaseGhostEntity(Tool)
+		if not ShouldRun then return end
+
+		if IsValid(Tool.GhostEntity) then
+			Tool:ReleaseGhostEntity()
+		end
+	end
+
+	hook.Add("ACF_OnUpdateClientData", "ACF_HandleGhostEntities", function(_, Key)
+		if Key ~= "Primary" and Key ~= "Secondary" then return end
+
+		--if Value == "N/A" then
+			ACF.UpdateGhostEntity({[Key] = {Model = "", Material = "", Scale = DefaultScale, AbsoluteScale = false, PosOffset = nil, AngOffset = nil}})
+		--end
+	end)
+end

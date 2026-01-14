@@ -25,6 +25,10 @@ Components.RegisterItem("AL-IMP", "AL", {
 			local Volume = math.pi * R * R * H
 
 			MassLabel:SetText(string.format("Mass : %s", ACF.GetProperMass(Volume * 250)))
+
+			if Menu.ComponentPreview then
+				Menu.ComponentPreview:SetModelScale(AutoloaderSize, true)
+			end
 		end
 
 		local CaliberSlider = Menu:AddSlider("Max Caliber (mm)", ACF.MinAutoloaderCaliber, ACF.MaxAutoloaderCaliber, 2)

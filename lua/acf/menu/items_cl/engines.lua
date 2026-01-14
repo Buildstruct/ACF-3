@@ -65,7 +65,7 @@ local function CreateMenu(Menu)
 	local EngineBase = Menu:AddCollapsible("#acf.menu.engines.engine_info", nil, "icon16/monitor_edit.png")
 	local EngineName = EngineBase:AddTitle()
 	local EngineDesc = EngineBase:AddLabel()
-	local EnginePreview = EngineBase:AddModelPreview(nil, true)
+	local EnginePreview = EngineBase:AddModelPreview(nil, true, "Primary")
 	local EngineStats = EngineBase:AddLabel()
 
 	local PowerGraph = Menu:AddGraph()
@@ -95,6 +95,7 @@ local function CreateMenu(Menu)
 
 	local Min = ACF.ContainerMinSize
 	local Max = ACF.ContainerMaxSize
+	local FuelPreview
 
 	-- Set default fuel tank size values before creating sliders to prevent nil value errors
 	local DefaultFuelSizeX = ACF.GetClientNumber("FuelSizeX", (Min + Max) / 2)
@@ -119,6 +120,11 @@ local function CreateMenu(Menu)
 		TankSize.x = X
 
 		FuelType:UpdateFuelText()
+
+		if FuelPreview then
+			FuelPreview:SetModelScale(TankSize * 12)
+		end
+
 		UpdateSize()
 		return X
 	end)
@@ -133,6 +139,11 @@ local function CreateMenu(Menu)
 		TankSize.y = Y
 
 		FuelType:UpdateFuelText()
+
+		if FuelPreview then
+			FuelPreview:SetModelScale(TankSize * 12)
+		end
+
 		UpdateSize()
 		return Y
 	end)
@@ -147,13 +158,18 @@ local function CreateMenu(Menu)
 		TankSize.z = Z
 
 		FuelType:UpdateFuelText()
+
+		if FuelPreview then
+			FuelPreview:SetModelScale(TankSize * 12)
+		end
+
 		UpdateSize()
 		return Z
 	end)
 
 	local FuelBase = Menu:AddCollapsible("#acf.menu.fuel.tank_info", nil, "icon16/cup_edit.png")
 	local FuelDesc = FuelBase:AddLabel()
-	local FuelPreview = FuelBase:AddModelPreview(nil, true)
+	FuelPreview = FuelBase:AddModelPreview(nil, true, "Secondary")
 	local FuelInfo = FuelBase:AddLabel()
 
 	ACF.SetClientData("PrimaryClass", "acf_engine")

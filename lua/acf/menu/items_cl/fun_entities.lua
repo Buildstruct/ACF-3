@@ -18,7 +18,7 @@ do -- Piledrivers menu
 		local ClassBase = Menu:AddCollapsible("#acf.menu.fun.piledrivers.piledriver_info", nil, "icon16/monitor_edit.png")
 		local ClassName = ClassBase:AddTitle()
 		local ClassDesc = ClassBase:AddLabel()
-		local ClassPreview = ClassBase:AddModelPreview(nil, true)
+		local ClassPreview = ClassBase:AddModelPreview(nil, true, "Primary")
 		local ClassInfo = ClassBase:AddLabel()
 		local ClassStats = ClassBase:AddLabel()
 
@@ -69,6 +69,7 @@ do -- Piledrivers menu
 			BulletData = Ammo:ClientConvert(ACF.GetAllClientData())
 
 			Panel:SetValue(Value)
+			ClassPreview:SetModelScale(Scale, true)
 
 			return Value
 		end)

@@ -10,9 +10,17 @@ local CreateControl, IsScalable
 ---Note that this could be a weapon group item if the weapon isn't scalable.
 local function UpdatePreview(Base, Data)
 	local Preview = Base.Preview
+	local Class   = Current.Class
+	local Caliber = Current.Caliber
 
 	Preview:UpdateModel(Data.Model)
 	Preview:UpdateSettings(Data.Preview)
+
+	-- Set scale to 1 if Weapon exists (non scaled lmao), or relative caliber otherwise
+	local Scale   = Weapon and 1 or (Caliber / Class.Caliber.Base * (Class.ScaleFactor or 1))
+	local Preview = Base.Preview
+
+	Preview:SetModelScale(Scale, true)
 end
 
 ---Updates the current weapon class controls on the menu.
@@ -58,7 +66,8 @@ CreateControl = function(Base)
 	end
 
 	if IsScalable then -- Scalable
-		local Bounds = Current.Class.Caliber
+		local Class = Current.Class
+		local Bounds = Class.Caliber
 		-- Set default caliber value before creating the slider to prevent nil value errors
 		local DefaultCaliber = ACF.GetClientNumber("Caliber", Bounds.Base)
 		ACF.SetClientData("Caliber", DefaultCaliber, true)
@@ -69,12 +78,13 @@ CreateControl = function(Base)
 			local Caliber  = math.Round(Value, 2)
 			local NameText = language.GetPhrase("acf.menu.weapons.name_text")
 
-			Title:SetText(NameText:format(Caliber, Current.Class.Name))
+			Title:SetText(NameText:format(Caliber, Class.Name))
 			Panel:SetValue(Caliber)
 
 			Current.Caliber = Caliber
 
 			ACF.UpdateAmmoMenu(Menu)
+			UpdatePreview(Base, Class)
 
 			return Caliber
 		end)
@@ -195,7 +205,7 @@ local function CreateMenu(Menu)
 
 	local EntName    = WeaponBase:AddTitle()
 	local ClassDesc  = WeaponBase:AddLabel()
-	local EntPreview = WeaponBase:AddModelPreview(nil, true)
+	local EntPreview = WeaponBase:AddModelPreview(nil, true, "Primary")
 	local EntData    = WeaponBase:AddLabel()
 	local BreechIndex = WeaponBase:AddComboBox()
 	BreechIndex:SetName("WeaponBreechIndex")

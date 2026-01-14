@@ -4,6 +4,11 @@ local Classes   = ACF.Classes
 local AmmoTypes = Classes.AmmoTypes
 local BoxSize   = Vector()
 local Ammo, BulletData
+local GhostData = {Secondary = {
+	Model = "models/holograms/hq_rcube_thin.mdl",
+	Material = "phoenix_storms/Future_vents",
+	Scale = Vector(1, 1, 1),
+}}
 
 local GraphRed    = Color(200, 65, 65)
 local GraphBlue   = Color(65, 65, 200)
@@ -156,6 +161,9 @@ local function UpdateBoxSizeFromProjectileCounts(ToolData, BulletData)
 		ACF.SetClientData("AmmoSizeX", BoxSize.x)
 		ACF.SetClientData("AmmoSizeY", BoxSize.y)
 		ACF.SetClientData("AmmoSizeZ", BoxSize.z)
+
+		GhostData.Secondary.Scale = BoxSize
+		ACF.UpdateGhostEntity(GhostData)
 	end
 end
 

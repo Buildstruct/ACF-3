@@ -13,5 +13,14 @@ Components.RegisterItem("WTJ-IMP", "WTJ", {
 	CreateMenu = function(_, Menu)
 		local SizeX = Menu:AddSlider("Size", 0.5, 1, 2)
 		SizeX:SetClientData("WaterjetSize", "OnValueChanged")
+		SizeX:DefineSetter(function(Panel, _, _, Value)
+			local X = math.Round(Value, 2)
+
+			Panel:SetValue(X)
+
+			if Menu.ComponentPreview then
+				Menu.ComponentPreview:SetModelScale(X, true)
+			end
+		end)
 	end
 })
