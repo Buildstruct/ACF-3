@@ -962,7 +962,7 @@ function PANEL:AddModelPreview(Model, Rotate, GhostEntClass)
 
 		if GhostEntClass == "Primary" or GhostEntClass == "Secondary" then
 			local GhostData = {
-				[GhostEntClass] = {Scale = Scale or Vector(1, 1, 1), AbsoluteScale = AbsoluteScale}
+				[GhostEntClass] = {Scale = Scale or Vector(1, 1, 1), AbsoluteScale = AbsoluteScale, PosOffset = self.GhostPosOffset, AngOffset = self.GhostAngOffset}
 			}
 
 			ACF.UpdateGhostEntity(GhostData)
