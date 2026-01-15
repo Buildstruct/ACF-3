@@ -90,6 +90,7 @@ function Ballistics.CalcBulletFlight(Bullet)
 		Bullet:PostCalcFlight()
 	end
 
+	debugoverlay.Line(Bullet.Pos, Bullet.NextPos, 5, Bullet.Color)
 	Bullet.Pos = Bullet.NextPos
 end
 
