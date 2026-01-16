@@ -123,6 +123,7 @@ Components.RegisterItem("RFL-UNIT", "SP-RFL", {
 		UpdateSupplyText()
 
 		ACF.SetClientData("PrimaryClass", "acf_supply")
+		ACF.SetClientData("SecondaryClass", "N/A")
 	end,
 })
 

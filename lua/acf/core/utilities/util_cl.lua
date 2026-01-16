@@ -496,6 +496,7 @@ do -- Default turret menus
 			ACF.SetClientData("Turret", Data.ID)
 			ACF.SetClientData("Destiny", "Turrets")
 			ACF.SetClientData("PrimaryClass", "acf_turret")
+			ACF.SetClientData("SecondaryClass", "N/A")
 
 			local TurretData	= {
 				Ready		= false,
@@ -755,6 +756,7 @@ do -- Default turret menus
 			ACF.SetClientData("Motor", Data.ID)
 			ACF.SetClientData("Destiny", "TurretMotors")
 			ACF.SetClientData("PrimaryClass", "acf_turret_motor")
+			ACF.SetClientData("SecondaryClass", "N/A")
 
 			Menu:AddLabel(language.GetPhrase("acf.menu.turrets.motors.speed"):format(Data.Speed))
 
@@ -958,6 +960,7 @@ do -- Default turret menus
 			ACF.SetClientData("Gyro", Data.ID)
 			ACF.SetClientData("Destiny", "TurretGyros")
 			ACF.SetClientData("PrimaryClass", "acf_turret_gyro")
+			ACF.SetClientData("SecondaryClass", "N/A")
 
 			local MassText = language.GetPhrase("acf.menu.turrets.mass_text")
 			Menu:AddLabel(MassText:format(Data.Mass))
@@ -977,6 +980,7 @@ do -- Default turret menus
 			ACF.SetClientData("Computer", Data.ID)
 			ACF.SetClientData("Destiny", "TurretComputers")
 			ACF.SetClientData("PrimaryClass", "acf_turret_computer")
+			ACF.SetClientData("SecondaryClass", "N/A")
 
 			local MassText = language.GetPhrase("acf.menu.turrets.mass_text")
 			Menu:AddLabel(MassText:format(Data.Mass))

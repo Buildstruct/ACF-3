@@ -96,6 +96,17 @@ do -- Generic Spawner/Linker operation creator
 		end
 	end
 
+	local function UnselectAllEntities(Tool)
+		local Player = Tool:GetOwner()
+		local Ents   = GetPlayerEnts(Player)
+
+		if not next(Ents) then return end
+
+		for Entity in pairs(Ents) do
+			UnselectEntity(Entity, Name, Tool)
+		end
+	end
+
 	local function SelectEntity(Entity, Name, Tool)
 		if not IsValid(Entity) then return false end
 
@@ -292,16 +303,8 @@ do -- Generic Spawner/Linker operation creator
 
 					return true
 				end,
-				OnHolster = function(Tool)
-					local Player = Tool:GetOwner()
-					local Ents   = GetPlayerEnts(Player)
-
-					if not next(Ents) then return end
-
-					for Entity in pairs(Ents) do
-						UnselectEntity(Entity, Name, Tool)
-					end
-				end,
+				OnHolster = UnselectAllEntities,
+				OnExitOp = UnselectAllEntities,
 			})
 
 			ACF.RegisterToolInfo("acf_menu", "Linker", Name, {

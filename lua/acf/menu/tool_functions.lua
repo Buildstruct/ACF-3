@@ -253,22 +253,20 @@ do -- Tool Functions Loader
 			local ToolName = net.ReadString()
 			local Name = net.ReadString()
 			local Value = net.ReadInt(8)
+			local LocalPly = LocalPlayer()
 
-			if not IsValid( LocalPlayer() ) then return end
+			if not IsValid( LocalPly ) then return end
 
 			local Data = Tools[ToolName]
-			local Tool = LocalPlayer():GetTool(ToolName)
+			local Tool = LocalPly:GetTool(ToolName)
 
 			if not Data then return end
 			if not Tool then return end
 
 			if Name == "Stage" then
-				Tool.Stage = Value
-				Tool.StageData = Data.Indexed[Value]
+				Tool:SetStage(Value)
 			elseif Name == "Operation" then
-				Tool.Operation = Value
-				Tool.OpData = Tool.StageData.Indexed[Value]
-				Tool.DrawToolScreen = Tool.OpData.DrawToolScreen
+				Tool:SetOperation(Value)
 			end
 		end)
 	end
@@ -353,6 +351,8 @@ do -- Tool Functions Loader
 					OnEnterOp(self)
 				end
 			end
+
+			self.DrawToolScreen = self.OpData and self.OpData.DrawToolScreen
 		end
 
 		function Tool:GetOperation()
@@ -729,9 +729,7 @@ do -- Ghost entity handling
 	function ACF.ReleaseGhostEntity(Tool)
 		if not ShouldRun then return end
 
-		if IsValid(Tool.GhostEntity) then
-			Tool:ReleaseGhostEntity()
-		end
+		Tool:ReleaseGhostEntity()
 	end
 
 	hook.Add("ACF_OnUpdateClientData", "ACF_HandleGhostEntities", function(_, Key)
