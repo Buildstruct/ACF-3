@@ -1,6 +1,7 @@
 local Overlay = ACF.Overlay
 
-local function GetNum(Slot) return math.Round(Slot.Data[2] * (ACF.GetServerData("TorqueMult") or ACF.TorqueMult or 1)) end
+local acf_overlay_torquemult = CreateClientConVar("acf_overlay_torquemult", "0", true, false, "ACF Overlay; If true, engine power/torque elements in the overlay will be multiplied by the internal torque multiplier.\nIt should be noted that the torque multiplier is a temporary stopgap for internal code issues, and will be removed in a future mobility update.")
+local function GetNum(Slot) return math.Round(Slot.Data[2] * (acf_overlay_torquemult:GetBool() and (ACF.GetServerData("TorqueMult") or ACF.TorqueMult or 1) or 1)) end
 
 do
     local ELEMENT = {}
