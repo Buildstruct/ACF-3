@@ -63,7 +63,6 @@ ACF.AddClientSettings(501, "Overlay", function(Base)
     end
     local CONVAR = FindMetaTable("ConVar")
     LinkToConVar(Base:AddSlider("Overlay Scale", 0, 3, 2), "SetValue", "OnValueChanged", "acf_overlay_scale", CONVAR.GetFloat, CONVAR.SetFloat, 0.1)
-    LinkToConVar(Base:AddCheckBox("Account for Torque Multiplier?"), "SetValue", "OnChange", "acf_overlay_torquemult", CONVAR.GetBool, CONVAR.SetBool, 0.1)
 
     hook.Add("PostRenderVGUI", Base, function()
         local Parent = Base:GetParent()

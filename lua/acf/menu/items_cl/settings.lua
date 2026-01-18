@@ -37,8 +37,10 @@ do -- Clientside settings
 
 		local HitBox = Base:AddCheckBox("#acf.menu.settings.draw_hitbox")
 		HitBox:SetConVar("acf_drawboxes")
-
 		Base:AddHelp("#acf.menu.settings.draw_hitbox_desc")
+
+		local MultTorque = Base:AddCheckBox("#acf.menu.settings.menu_multiplytorquemult")
+		MultTorque:SetConVar("acf_menu_multiplytorquemult")
 
 		local Rounds = Base:AddSlider("#acf.menu.settings.max_rounds", 0, 64, 0)
 		Rounds:SetConVar("ACF_MaxRoundsDisplay")
