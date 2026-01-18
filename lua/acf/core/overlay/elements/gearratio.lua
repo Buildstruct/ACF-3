@@ -28,9 +28,10 @@ function ELEMENT.PostRender(_, Slot)
         OutTime = InTime / Ratio
     end
 
+    local Size = 16 * Overlay.GetScaleMult()
     Overlay.SetMaterial(COG)
-    Overlay.DrawTexturedRectRotated(-XOffset - 16 - 16 + 2, 12 + 3, 15, 15, InTime, color_white)
-    Overlay.DrawTexturedRectRotated(-XOffset - 16, 12 - 3, 15, 15, -OutTime, color_white)
+    Overlay.DrawTexturedRectRotated(-XOffset - Size  - Size  + 2, 12 + 3, Size - 1, Size - 1, InTime, color_white)
+    Overlay.DrawTexturedRectRotated(-XOffset - Size , 12 - 3, Size - 1, Size - 1, -OutTime, color_white)
 end
 
 Overlay.DefineElementType("GearRatio", ELEMENT)
