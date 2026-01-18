@@ -67,8 +67,7 @@ CreateControl = function(Base)
 	end
 
 	if IsScalable then -- Scalable
-		local Class = Current.Class
-		local Bounds = Class.Caliber
+		local Bounds = Current.Class.Caliber
 		-- Set default caliber value before creating the slider to prevent nil value errors
 		local DefaultCaliber = ACF.GetClientNumber("Caliber", Bounds.Base)
 		ACF.SetClientData("Caliber", DefaultCaliber, true)
@@ -79,13 +78,13 @@ CreateControl = function(Base)
 			local Caliber  = math.Round(Value, 2)
 			local NameText = language.GetPhrase("acf.menu.weapons.name_text")
 
-			Title:SetText(NameText:format(Caliber, Class.Name))
+			Title:SetText(NameText:format(Caliber, Current.Class.Name))
 			Panel:SetValue(Caliber)
 
 			Current.Caliber = Caliber
 
 			ACF.UpdateAmmoMenu(Menu)
-			UpdatePreview(Base, Class)
+			UpdatePreview(Base, Current.Class)
 
 			return Caliber
 		end)
