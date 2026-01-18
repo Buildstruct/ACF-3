@@ -523,7 +523,7 @@ end
 function ENT:UpdateOutputs(SelfTbl)
 	SelfTbl = SelfTbl or self:GetTable()
 	local FuelUsage = Round(SelfTbl.FuelUsage)
-	local Torque    = SelfTbl.Torque * ACF.TorqueMult
+	local Torque    = SelfTbl.Torque
 	local FlyRPM    = SelfTbl.FlyRPM
 	local Power     = Round(Torque * FlyRPM / 9548.8)
 
