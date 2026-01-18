@@ -557,8 +557,8 @@ function ENT:ACF_UpdateOverlayState(State)
 		State:AddWarning("Idle")
 	end
 	State:AddKeyValue("Type", self.Name)
-	State:AddKeyValue("Power", ("%s kW / %s hp"):format(Round(self.PeakPower * ACF.TorqueMult), Round(self.PeakPower * ACF.TorqueMult * ACF.KwToHp)))
-	State:AddKeyValue("Torque", ("%s Nm / %s ft-lb"):format(Round(self.PeakTorque * ACF.TorqueMult), Round(self.PeakTorque * ACF.TorqueMult * ACF.NmToFtLb)))
+	State:AddEnginePower("Power", self.PeakPower)
+	State:AddEngineTorque("Torque", self.PeakTorque)
 	State:AddKeyValue("Powerband", ("%s - %s RPM"):format(self.PeakMinRPM, self.PeakMaxRPM))
 	State:AddKeyValue("Redline", ("%s RPM"):format(self.LimitRPM))
 end
