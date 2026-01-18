@@ -12,6 +12,7 @@ local function UpdatePreview(Base, Data)
 	local Preview = Base.Preview
 	local Class   = Current.Class
 	local Caliber = Current.Caliber
+	local Weapon  = Current.Weapon
 
 	Preview:UpdateModel(Data.Model)
 	Preview:UpdateSettings(Data.Preview)
