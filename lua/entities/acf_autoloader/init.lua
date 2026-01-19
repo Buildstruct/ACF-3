@@ -1,5 +1,5 @@
-AddCSLuaFile("shared.lua")
 AddCSLuaFile("cl_init.lua")
+AddCSLuaFile("shared.lua")
 
 include("shared.lua")
 
@@ -9,6 +9,8 @@ local ACF         = ACF
 local TraceLine   = util.TraceLine
 local Classes     = ACF.Classes
 local HookRun     = hook.Run
+
+util.AddNetworkString("ACF_Autoloader_Links")
 
 -- Converts shell scale to model scale
 local RefSize = Vector(43.233333587646, 7.2349619865417, 7.2349619865417)
@@ -47,6 +49,14 @@ end
 
 local MaxDistance = ACF.LinkDistance * ACF.LinkDistance
 
+local function BroadcastEntity(Name, Entity, Entity2, State)
+	net.Start(Name)
+	net.WriteUInt(Entity:EntIndex(), 16)
+	net.WriteUInt(Entity2:EntIndex(), 16)
+	net.WriteBool(State)
+	net.Broadcast()
+end
+
 -- Arm to gun links
 ACF.RegisterClassPreLinkCheck("acf_autoloader", "acf_gun", function(This, Gun)
 	if IsValid(This.Gun) or Gun.Autoloader then return false, "Autoloader is already linked to that gun." end
@@ -61,6 +71,7 @@ end)
 ACF.RegisterClassLink("acf_autoloader", "acf_gun", function(This, Gun)
 	This.Gun = Gun
 	Gun.Autoloader = This
+	BroadcastEntity("ACF_Autoloader_Links", This, Gun, true)
 	return true, "Autoloader linked successfully."
 end)
 
@@ -68,6 +79,7 @@ ACF.RegisterClassUnlink("acf_autoloader", "acf_gun", function(This, Gun)
 	if not IsValid(This.Gun) or not Gun.Autoloader then return false, "Autoloader was not linked to that gun." end
 	This.Gun = nil
 	Gun.Autoloader = nil
+	BroadcastEntity("ACF_Autoloader_Links", This, Gun, false)
 	return true, "Autoloader unlinked successfully."
 end)
 
