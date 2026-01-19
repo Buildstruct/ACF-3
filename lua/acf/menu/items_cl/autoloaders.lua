@@ -61,7 +61,7 @@ Components.RegisterItem("AL-IMP", "AL", {
 		end)
 
 		-- Helper text
-		Menu:AddLabel("Set the max caliber and length to the dimensions of your shell.")
+		Menu:AddLabel("Set the max caliber and length to the dimensions of your shell (See ammo crate overlay).")
 		Menu:AddLabel("They can link to multiple ammo crates, but only one gun.")
 		Menu:AddLabel("They must have the same parent as their ammo crates.")
 		Menu:AddLabel("They must be aligned with the gun's breech.")
