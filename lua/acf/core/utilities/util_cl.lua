@@ -669,8 +669,7 @@ do -- Default turret menus
 				Graph:PlotPoint(language.GetPhrase("acf.menu.turrets.estimate"), TurretData.TotalMass, Info.MaxSlewRate, GraphBlue)
 			end
 
-			RingSize:SetClientData("RingSize", "OnValueChanged")
-			RingSize:DefineSetter(function(Panel, _, _, Value)
+			local function UpdateSize(Panel, _, _, Value)
 				local N = Value
 
 				Panel:SetValue(N)
@@ -703,7 +702,10 @@ do -- Default turret menus
 				HandCrankLbl:UpdateSim()
 
 				return N
-			end)
+			end
+			RingSize:SetClientData("RingSize", "OnValueChanged")
+			RingSize:DefineSetter(UpdateSize)
+			UpdateSize(RingSize, nil, nil, UpdateSize:GetValue())
 
 			MaxSpeed:SetClientData("MaxSpeed", "OnValueChanged")
 			MaxSpeed:DefineSetter(function(Panel, _, _, Value)
