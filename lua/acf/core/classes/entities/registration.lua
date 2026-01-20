@@ -354,6 +354,7 @@ function LinkedEntitiesType.PostPaste(self, Ctx, Value, CreatedEnts)
 	-- This will have been initialized by LinkedEntitiesType.Init.
 	-- We need the old table in this case since the table is by-ref
 	local EntTable = self:ACF_GetUserVar(Ctx:GetCurrentVarName())
+	Value = table.Copy(Value)
 	table.Empty(EntTable)
 
 	for _, EntIndex in ipairs(Value) do
