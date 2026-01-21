@@ -7,10 +7,11 @@ local Ammo      = AmmoTypes.Register("FL", "AP")
 function Ammo:OnLoaded()
 	Ammo.BaseClass.OnLoaded(self)
 
-	self.Name		 = "Flechette"
-	self.SpawnIcon   = "acf/icons/shell_fl.png"
-	self.Model		 = "models/munitions/dart_100mm.mdl"
-	self.Description = "#acf.descs.ammo.fl"
+	self.Name		     = "Canister"
+	self.SpawnIcon       = "acf/icons/shell_fl.png"
+	self.Bodygroup       = 10 -- CANISTER bodygroup index for crate/menu
+	self.FlightBodygroup = 13 -- Canister ball projectile bodygroup for flight
+	self.Description     = "#acf.descs.ammo.fl"
 	self.Blacklist = {
 		AC = true,
 		GL = true,
@@ -178,8 +179,11 @@ if SERVER then
 	function Ammo:Network(Entity, BulletData)
 		Ammo.BaseClass.Network(self, Entity, BulletData)
 
+		local FlechetteCaliber = math.Round(BulletData.FlechetteCaliber, 2)
+
 		Entity:SetNW2String("AmmoType", "FL")
-		Entity:SetNW2Float("Caliber", math.Round(BulletData.FlechetteCaliber, 2))
+		Entity:SetNW2Float("Caliber", FlechetteCaliber)
+		Entity:SetNW2Float("FlightCaliber", FlechetteCaliber) -- Override for correct projectile scaling
 		Entity:SetNW2Float("ProjMass", BulletData.FlechetteMass)
 		Entity:SetNW2Float("DragCoef", BulletData.FlechetteDragCoef)
 	end

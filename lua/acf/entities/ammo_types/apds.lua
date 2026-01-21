@@ -8,7 +8,7 @@ function Ammo:OnLoaded()
 
 	self.Name		 = "Armor Piercing Discarding Sabot"
 	self.SpawnIcon   = "acf/icons/shell_apds.png"
-	self.Model		 = "models/munitions/round_100mm_ap_shot.mdl"
+	self.Bodygroup   = 3 -- APDS bodygroup index
 	self.Description = "#acf.descs.ammo.apds"
 	self.Blacklist = ACF.GetWeaponBlacklist({
 		C = true,
