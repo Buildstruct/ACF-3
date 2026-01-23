@@ -223,7 +223,7 @@ if SERVER then
 
 	function Ammo:Network(Entity, BulletData)
 		Entity:SetNW2String("AmmoType", "AP")
-		Entity:SetNW2Float("Caliber", BulletData.Caliber)
+		Entity:SetNW2Float("Caliber", BulletData.Diameter)
 		Entity:SetNW2Float("ProjMass", BulletData.ProjMass)
 		Entity:SetNW2Float("PropMass", BulletData.PropMass)
 		Entity:SetNW2Float("DragCoef", BulletData.DragCoef)
@@ -235,11 +235,6 @@ if SERVER then
 			Entity:SetNW2String("FlightModel", FlightInfo.Model)
 			Entity:SetNW2Int("FlightBodygroup", FlightInfo.Bodygroup)
 		end
-
-		-- Network projectile diameter for bullet effect scaling
-		-- For sub-caliber rounds (APDS, APFSDS, APCR), Diameter < Caliber
-		-- For full-caliber rounds (AP, HE, etc.), Diameter = Caliber
-		Entity:SetNW2Float("FlightCaliber", BulletData.Diameter)
 	end
 
 	function Ammo:GetCrateName()

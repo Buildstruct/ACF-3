@@ -66,8 +66,7 @@ function EFFECT:Init(Data)
 			SimFlight     = Flight,
 			SimPos        = Origin,
 			SimPosLast    = Origin,
-			Caliber       = Caliber, -- Gun caliber (for tracer effects)
-			FlightCaliber = Crate:GetNW2Float("FlightCaliber", Caliber), -- Projectile diameter (for model scaling)
+			Caliber       = Caliber,
 			RoundMass     = Crate:GetNW2Float("ProjMass", 10),
 			FillerMass    = Crate:GetNW2Float("FillerMass"),
 			WPMass        = Crate:GetNW2Float("WPMass"),
@@ -92,7 +91,7 @@ function EFFECT:Init(Data)
 
 		self:SetPos(Origin)
 		self:SetAngles(Flight:Angle())
-		self:SetModelScale(BulletData.FlightCaliber * 0.1, 0)
+		self:SetModelScale(Caliber * 0.1, 0)
 
 		self.DrawEffect = CanDraw
 
