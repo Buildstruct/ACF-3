@@ -34,7 +34,7 @@ Components.RegisterItem("AL-IMP", "AL", {
 		local CaliberSlider = Menu:AddSlider("Max Caliber (mm)", ACF.MinAutoloaderCaliber, ACF.MaxAutoloaderCaliber, 2)
 		CaliberSlider:SetClientData("AutoloaderCaliber", "OnValueChanged")
 		CaliberSlider:DefineSetter(function(Panel, _, _, Value)
-			local Size = math.Round(Value)
+			local Size = math.Round(Value, 2)
 
 			Panel:SetValue(Size)
 
@@ -49,7 +49,7 @@ Components.RegisterItem("AL-IMP", "AL", {
 		local LengthSlider = Menu:AddSlider("Length (cm)", ACF.MinAutoloaderLength, ACF.MaxAutoloaderLength, 2)
 		LengthSlider:SetClientData("AutoloaderLength", "OnValueChanged")
 		LengthSlider:DefineSetter(function(Panel, _, _, Value)
-			local Length = math.Round(Value)
+			local Length = math.Round(Value, 2)
 
 			Panel:SetValue(Length)
 
