@@ -414,7 +414,6 @@ do -- Spawn and Update functions --------------------------------
 
 	hook.Add("ACF_OnSetupInputs", "ACF Cyclic ROF", function(Entity, List)
 		if Entity:GetClass() ~= "acf_gun" then return end
-		if not Entity.BaseCyclic then return end
 
 		List[#List + 1] = "Rate of Fire (Sets the rate of fire of the weapon in rounds per minute)"
 	end)
@@ -719,10 +718,12 @@ do -- Metamethods --------------------------------
 		end)
 
 		ACF.AddInputAction("acf_gun", "Rate of Fire", function(Entity, Value)
-			if not Entity.BaseCyclic then return end
-
-			Entity.Cyclic     = math.Clamp(Value, 30, Entity.BaseCyclic)
-			Entity.ReloadTime = 60 / Entity.Cyclic
+			if Entity.BaseCyclic then
+				Entity.Cyclic     = math.Clamp(Value, 30, Entity.BaseCyclic)
+				Entity.ReloadTime = 60 / Entity.Cyclic
+			else
+				Entity.TargetReloadTime = math.Clamp(60 / Value, 0, 100)
+			end
 		end)
 
 		-- Logging breech locations
@@ -963,6 +964,7 @@ do -- Metamethods --------------------------------
 			if IsValid(self.FreeCrate) then self.FreeCrate:Consume(-1) end -- Put a shell back in the crate, if possible
 
 			local IdealTime, Manual = ACF.CalcReloadTimeMag(self.Caliber, self.ClassData, self.WeaponData, self.BulletData, self)
+			if self.TargetReloadTime then IdealTime = math.max(IdealTime, self.TargetReloadTime) end
 			local Time = Manual and IdealTime / self.LoadCrewMod or IdealTime
 
 			self:ReloadEffect(Reload and Time * 2 or Time)
@@ -1007,6 +1009,7 @@ do -- Metamethods --------------------------------
 
 				local BulletData = Crate.BulletData
 				local IdealTime, Manual = ACF.CalcReloadTime(self.Caliber, self.ClassData, self.WeaponData, BulletData, self)
+				if self.TargetReloadTime then IdealTime = math.max(IdealTime, self.TargetReloadTime) end
 				local Time = Manual and IdealTime / self.LoadCrewMod or IdealTime
 
 				self.ReloadTime   = Time
