@@ -330,7 +330,7 @@ do -- ACF global vars
 	ACF.FuelSupplyColor    = Color(76, 201, 250, 10) -- The color to use for the fuel supply effect
 	ACF.LiIonED            = 0.458 -- li-ion energy density: kw hours / liter
 	ACF.SupplyDistance     = 300 -- Distance in which supply units distribute mass to containers.
-	ACF.SupplyMassRate     = 0.00009417 -- kg per second per cubic inch of supply unit volume (no distance attenuation)
+	ACF.SupplyMassRate     = 0.007017 -- kg per second per cubic inch of supply unit volume (no distance attenuation)
 	ACF.RefuelSpeed        = 700 -- Refueling speed for fuel tanks
 
 	-- Crew

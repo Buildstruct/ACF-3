@@ -658,6 +658,7 @@ do -- Attachment storage
 	local GetAll    = EntMeta.GetAttachments
 	local Lookup    = EntMeta.LookupAttachment
 	local Models    = {}
+	local BadModels = {}
 
 	local function GetModelData(Model, NoCreate)
 		local Table = Models[Model]
@@ -701,10 +702,15 @@ do -- Attachment storage
 
 	local function GetAttachData(Entity)
 		local Model = Entity:GetModel()
+		if not Model then return end
 
-		if not Model or IsUseless(Model) then return end
+		if BadModels[Model] == nil then
+			BadModels[Model] = IsUseless(Model)
+		end
 
-		local Data  = Entity.AttachData
+		if BadModels[Model] == true then return end
+
+		local Data = Entity.AttachData
 
 		if not Data or Data.Model ~= Model then
 			local Attachments = GetModelData(Model)
