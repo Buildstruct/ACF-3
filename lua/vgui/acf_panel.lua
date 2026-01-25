@@ -1046,6 +1046,14 @@ function PANEL:AddModelPreview(Model, Rotate, GhostEntClass)
 		self:SetFOV(Data and Data.FOV or self.DefaultFOV)
 		self.GhostPosOffset = Data and Data.PosOffset
 		self.GhostAngOffset = Data and Data.AngOffset
+
+		-- Apply bodygroup if specified (group 0 for all munition models)
+		if Data and Data.Bodygroup ~= nil then
+			local Entity = self:GetEntity()
+			if IsValid(Entity) then
+				Entity:SetBodygroup(0, Data.Bodygroup)
+			end
+		end
 	end
 
 	function Panel:OnMousePressed(Button)

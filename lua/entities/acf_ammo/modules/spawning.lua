@@ -177,8 +177,18 @@ do -- Spawn/Update/Remove
 			local BulletData = Entity.BulletData
 			local Caliber = Entity.Caliber
 			local BeltFed = ACF.GetWeaponValue("IsBelted", Caliber, Class, Weapon) or false
+			local AmmoType = Entity.RoundData
+
+			-- Get model info from ammo type's unified resolver
+			local ModelInfo   = AmmoType:ResolveModel("Crate", Class, Weapon)
+			local RoundModel  = ModelInfo.Model
+			local RoundOffset = ModelInfo.Offset
+			local Bodygroup   = ModelInfo.Bodygroup
+			local NeedsRotation = ModelInfo.NeedsRotation
+
+			-- Get dimensions from weapon's round definition
 			local Round = Weapon and Weapon.Round or Class.Round
-			local RoundLength, RoundDiameter, RoundModel, RoundOffset = ACF.GetModelDimensions(Round)
+			local RoundLength, RoundDiameter = ACF.GetModelDimensions(Round)
 
 			if not RoundLength then
 				RoundDiameter = Caliber * ACF.AmmoCaseScale * 0.1
@@ -199,6 +209,8 @@ do -- Spawn/Update/Remove
 			ExtraData.IsBelted = BeltFed
 			ExtraData.RoundModel = RoundModel
 			ExtraData.RoundOffset = RoundOffset
+			ExtraData.Bodygroup = Bodygroup
+			ExtraData.NeedsRotation = NeedsRotation
 
 			-- Drum-specific data
 			ExtraData.IsDrum = Entity.Shape == "Cylinder"
@@ -238,6 +250,7 @@ do -- Spawn/Update/Remove
 					net.WriteUInt(ExtraData.MagSize, 10)
 					net.WriteUInt(ExtraData.AmmoStage, 5)
 					net.WriteBool(ExtraData.IsBelted)
+					net.WriteUInt(ExtraData.Bodygroup, 4) -- Bodygroup index (0-15)
 
 					-- Send drum-specific data
 					local IsDrum = ExtraData.IsDrum
@@ -256,6 +269,9 @@ do -- Spawn/Update/Remove
 						net.WriteString(ExtraData.RoundModel)
 						net.WriteVector(ExtraData.RoundOffset)
 					end
+
+					-- Send rotation flag (true = needs -90 degree rotation for cartridge models)
+					net.WriteBool(ExtraData.NeedsRotation)
 				end
 
 			if Player then

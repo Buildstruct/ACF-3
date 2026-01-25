@@ -859,6 +859,11 @@ do -- Metamethods --------------------------------
 				return
 			end
 
+			-- Call muzzle effect BEFORE creating bullets to avoid effect throttling
+			-- (FL ammo can create 64+ bullet effects which may saturate the effect queue)
+			self:MuzzleEffect()
+			self:Recoil()
+
 			-- Set in air if GLATGM is used
 			local GLATGM = AmmoType:Create(self, BulletData)
 			if IsValid(GLATGM) and AmmoType.ID == "GLATGM" then
@@ -867,9 +872,6 @@ do -- Metamethods --------------------------------
 					if IsValid(self) then WireLib.TriggerOutput(self, "In Air", 0) end
 				end)
 			end
-
-			self:MuzzleEffect()
-			self:Recoil()
 
 			-- Mark contraption as in combat when firing
 			local Contraption = self:GetContraption()

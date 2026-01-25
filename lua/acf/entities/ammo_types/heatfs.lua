@@ -8,16 +8,17 @@ function Ammo:OnLoaded()
 
 	self.Name		 = "High Explosive Anti-Tank Fin Stabilized"
 	self.SpawnIcon   = "acf/icons/shell_heatfs.png"
+	self.Bodygroup   = 9 -- HEATFS bodygroup index
 	self.Description = "#acf.descs.ammo.heatfs"
 	self.Blacklist = ACF.GetWeaponBlacklist({
 		C = true,
 		M = true,
 		AL = true,
 		HW = true,
-		SC = true,
+		SC = true
 	})
 
-	self.MaxStandoffRatio = .75
+	self.MaxStandoffRatio = 0.75
 end
 
 function Ammo:UpdateRoundData(ToolData, Data, GUIData)

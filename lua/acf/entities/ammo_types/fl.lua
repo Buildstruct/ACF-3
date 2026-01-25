@@ -7,10 +7,11 @@ local Ammo      = AmmoTypes.Register("FL", "AP")
 function Ammo:OnLoaded()
 	Ammo.BaseClass.OnLoaded(self)
 
-	self.Name		 = "Flechette"
-	self.SpawnIcon   = "acf/icons/shell_fl.png"
-	self.Model		 = "models/munitions/dart_100mm.mdl"
-	self.Description = "#acf.descs.ammo.fl"
+	self.Name		     = "Flechette"
+	self.SpawnIcon       = "acf/icons/shell_fl.png"
+	self.Bodygroup       = 10 -- CANISTER bodygroup index for crate/menu
+	self.FlightBodygroup = 4 -- APFSDS bodygroup for flight (dart-shaped flechettes)
+	self.Description     = "#acf.descs.ammo.fl"
 	self.Blacklist = {
 		AC = true,
 		GL = true,
@@ -178,8 +179,10 @@ if SERVER then
 	function Ammo:Network(Entity, BulletData)
 		Ammo.BaseClass.Network(self, Entity, BulletData)
 
+		local FlechetteCaliber = math.Round(BulletData.FlechetteCaliber, 2)
+
 		Entity:SetNW2String("AmmoType", "FL")
-		Entity:SetNW2Float("Caliber", math.Round(BulletData.FlechetteCaliber, 2))
+		Entity:SetNW2Float("Caliber", FlechetteCaliber)
 		Entity:SetNW2Float("ProjMass", BulletData.FlechetteMass)
 		Entity:SetNW2Float("DragCoef", BulletData.FlechetteDragCoef)
 	end
@@ -191,6 +194,9 @@ if SERVER then
 		local Spread  = Class and Class.Spread * ACF.GunInaccuracyScale or 0
 
 		State:AddNumber("Muzzle Velocity", BulletData.MuzzleVel, " m/s")
+		State:AddNumber("Flechette Count", BulletData.Flechettes)
+		State:AddNumber("Flechette Mass", math.Round(BulletData.FlechetteMass * 1000, 2), " g")
+		State:AddNumber("Flechette Caliber", math.Round(BulletData.FlechetteCaliber, 2), " mm")
 		State:AddNumber("Max Penetration", Data.MaxPen, " mm")
 		State:AddNumber("Max Spread", BulletData.FlechetteSpread + Spread, " degrees")
 	end

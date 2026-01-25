@@ -8,7 +8,8 @@ function Ammo:OnLoaded()
 
 	self.Name		 = "High Explosive"
 	self.SpawnIcon   = "acf/icons/shell_he.png"
-	self.Model		 = "models/munitions/round_100mm_shot.mdl"
+	self.Bodygroup   = 5 -- HE bodygroup index
+	self.MortarBodygroup = 0 -- HE mortar submodel
 	self.Description = "#acf.descs.ammo.he"
 	self.Blacklist = {
 		MG = true,

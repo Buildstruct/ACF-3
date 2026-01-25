@@ -18,8 +18,8 @@ ACF.Tools = ACF.Tools or {}
 --- @field OpData Operation The data for the current operation
 --- @field Information table<number, ToolInfo>
 
---- Represents an entry in the tool information display for a given operation in a given stage of a given tool  
---- (see https://wiki.facepunch.com/gmod/Tool_Information_Display)  
+--- Represents an entry in the tool information display for a given operation in a given stage of a given tool
+--- (see https://wiki.facepunch.com/gmod/Tool_Information_Display)
 --- name text, icon1 and icon2 are the only things that actually end up displayed in the tool binds display
 --- PLEASE read the wiki page on name (the way it interacts with the icons is not intuitive)
 --- @class ToolInfo
@@ -31,7 +31,7 @@ ACF.Tools = ACF.Tools or {}
 --- @field stage number The index of the stage in the tool
 --- @field op number The index of the operation in the stage above
 
---- A table representing the data a tool can have.  
+--- A table representing the data a tool can have.
 --- Initialized in GetToolData
 --- @class ToolData
 --- @field Tool Tool|nil The tool this tooldata belongs to
@@ -70,7 +70,7 @@ ACF.Tools = ACF.Tools or {}
 --- @type table<string, ToolData>
 local Tools = ACF.Tools
 
---- Retrieves the tool data for a given tool.  
+--- Retrieves the tool data for a given tool.
 --- If the tool data doesn't already exist, it will initialize it.
 --- USE THIS TO INITIALIZE YOUR TOOL DATA.
 --- @param Tool string The name of the tool. (e.g. "acf_copy"/"acf_menu")
@@ -162,12 +162,12 @@ do -- Tool Stage/Operation Registration function
 end
 
 do -- Tool Information Registration function
-	--- This function will add entries to the tool's Information table  
-	--- This function is only intended to work on the client  
-	--- For more reference about the values you can give it see:  
-	--- https://wiki.facepunch.com/gmod/Tool_Information_Display  
+	--- This function will add entries to the tool's Information table
+	--- This function is only intended to work on the client
+	--- For more reference about the values you can give it see:
+	--- https://wiki.facepunch.com/gmod/Tool_Information_Display
 	--- Note: name, stage and op will be assigned automatically for the returned ToolInfo
-	--- @param Tool string # The name of the tool 
+	--- @param Tool string # The name of the tool
 	--- @param Stage string # The name of the stage
 	--- @param Op string # The name of the operation
 	--- @param Info table # The information for the tool
@@ -247,7 +247,7 @@ do -- Tool Functions Loader
 			end
 		end)
 	elseif CLIENT then
-		-- When the client receives tool net vars, update the 
+		-- When the client receives tool net vars, update the
 		net.Receive("ACF_ToolNetVars", function()
 			-- Check UpdateNetVar below for what these mean
 			local ToolName = net.ReadString()
@@ -297,7 +297,7 @@ do -- Tool Functions Loader
 		local Data = Tools[Mode]
 		Data.Tool = Tool
 
-		--- Sets the stage of the tool (also resets the operation to 0)  
+		--- Sets the stage of the tool (also resets the operation to 0)
 		--- Only available on client
 		--- @param self Tool The tool
 		--- @param Stage number The index of the stage (see ToolData.Indexed)
@@ -525,7 +525,7 @@ do -- Clientside Tool interaction
 		local Key = "ToolMode:%s" -- (e.g. "ToolMode:acf_menu")
 		local Value = "%s:%s" -- (e.g. "Spawner":"Weapon")
 
-		--- Used by the client to network the current state of a tool, its stage and its operation. 
+		--- Used by the client to network the current state of a tool, its stage and its operation.
 		--- @param Tool string The name of the tool (e.g. "acf_menu"/"acf_copy")
 		--- @param Stage string The stage of the tool (e.g. "Spawner"/"Main")
 		--- @param Op string The operation of the tool (e.g. "Weapon"/"Sensor"/etc.)

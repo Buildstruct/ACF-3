@@ -11,7 +11,8 @@ function Ammo:OnLoaded()
 
 	self.Name		 = "High Explosive Anti-Tank"
 	self.SpawnIcon   = "acf/icons/shell_heat.png"
-	self.Model		 = "models/munitions/round_100mm_shot.mdl"
+	self.Bodygroup   = 8 -- HEAT bodygroup index
+	self.MortarBodygroup = 3 -- HEAT mortar submodel
 	self.Description = "#acf.descs.ammo.heat"
 	self.Blacklist = {
 		AC = true,

@@ -10,11 +10,12 @@ function Ammo:OnLoaded()
 
 	self.Name		 = "Armor Piercing High Explosive"
 	self.SpawnIcon   = "acf/icons/shell_aphe.png"
-	self.Model		 = "models/munitions/round_100mm_ap_shot.mdl"
+	self.Bodygroup   = 1 -- APHE bodygroup index
 	self.Description = "#acf.descs.ammo.aphe"
 	self.Blacklist = {
 		GL = true,
 		MG = true,
+		MO = true,
 		SL = true,
 		RAC = true,
 	}

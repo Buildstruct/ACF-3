@@ -48,6 +48,7 @@ do --MARK: Networking
 		entity.MagSize          = net.ReadUInt( 10 )
 		entity.AmmoStage        = net.ReadUInt( 5 )
 		entity.IsBelted         = net.ReadBool()
+		entity.RoundBodygroup   = net.ReadUInt( 4 ) -- Bodygroup index (0-15)
 
 		entity.IsDrum = net.ReadBool()
 
@@ -63,18 +64,15 @@ do --MARK: Networking
 			entity.RoundOffset = net.ReadVector()
 		end
 
-		-- Resolve model path
+		-- Read rotation flag (cartridge models need -90 degree rotation)
+		local needsRotation = net.ReadBool()
+
+		-- Resolve model path - use cartridge model with bodygroups for ammo visualization
 		local modelPath = entity.RoundModel
 
 		if not modelPath then
-			modelPath = "models/munitions/round_100mm.mdl"
-
-			if entity.BulletData and entity.BulletData.Type then
-				local ammoType = ACF.Classes.AmmoTypes.Get( entity.BulletData.Type )
-				if ammoType and ammoType.Model then
-					modelPath = ammoType.Model
-				end
-			end
+			-- Use the unified cartridge model with bodygroups
+			modelPath = "models/acf/munitions/cartridge.mdl"
 		end
 
 		-- Calculate model scale
@@ -82,31 +80,32 @@ do --MARK: Networking
 		local modelScale = Vector( 1, 1, 1 )
 
 		if modelSize then
-			if hasCustomModel then
-				modelScale = Vector(
-					entity.RoundSize.x / modelSize.x,
-					entity.RoundSize.y / modelSize.y,
-					entity.RoundSize.z / modelSize.z
-				)
-			else
+			if needsRotation then
+				-- Cartridge model needs axis swap due to rotation
 				modelScale = Vector(
 					entity.RoundSize.y / modelSize.x,
 					entity.RoundSize.z / modelSize.y,
 					entity.RoundSize.x / modelSize.z
+				)
+			else
+				modelScale = Vector(
+					entity.RoundSize.x / modelSize.x,
+					entity.RoundSize.y / modelSize.y,
+					entity.RoundSize.z / modelSize.z
 				)
 			end
 		end
 
 		-- Calculate projectile angle
 		local localAngle = Angle( entity.LocalAng )
-		if not hasCustomModel then
+		if needsRotation then
 			localAngle:RotateAroundAxis( entity.LocalAng:Right(), -90 )
 		end
 
 		-- Cache data for model creation
 		entity.CachedModelPath      = modelPath
 		entity.CachedLocalAngle     = localAngle
-		entity.CachedHasCustomModel = hasCustomModel
+		entity.CachedNeedsRotation  = needsRotation
 
 		local scaleMatrix = Matrix()
 		scaleMatrix:SetScale( modelScale )
@@ -115,12 +114,10 @@ do --MARK: Networking
 		-- Cache model offset for box positioning (base-origin models need centering)
 		local modelOffset = Vector( 0, 0, 0 )
 
-		if hasCustomModel then
-			if entity.RoundOffset then
-				modelOffset = entity.RoundOffset
-			end
-		else
+		if needsRotation then
 			modelOffset = -Vector( entity.RoundSize.x * 0.5, 0, 0 )
+		elseif entity.RoundOffset then
+			modelOffset = entity.RoundOffset
 		end
 
 		entity.CachedModelOffset = modelOffset
@@ -235,6 +232,7 @@ do --MARK: Ammo rendering
 		local roundSize     = self.RoundSize
 		local scaleMatrix   = self.CachedScaleMatrix
 		local modelOffset   = self.CachedModelOffset
+		local bodygroup     = self.RoundBodygroup or 0
 
 		local models = self._RoundModels
 
@@ -252,10 +250,10 @@ do --MARK: Ammo rendering
 				local drumAngle = Angle( localAngle )
 				drumAngle:RotateAroundAxis( Vector( 0, 0, 1 ), localAng.yaw )
 
-				-- For base-origin models (default shells), offset outward along radial direction
+				-- For cartridge models that need rotation, offset outward along radial direction
 				-- by half the round length to center the model at the calculated position
 				local finalPos = localPos
-				if not self.CachedHasCustomModel then
+				if self.CachedNeedsRotation then
 					local radialDir = Vector( localPos.x, localPos.y, 0 ):GetNormalized()
 					finalPos = localPos + radialDir * roundSize.x * 0.5
 				end
@@ -268,6 +266,7 @@ do --MARK: Ammo rendering
 					model:SetNoDraw( true )
 					model:DrawShadow( false )
 					model:EnableMatrix( "RenderMultiply", scaleMatrix )
+					model:SetBodygroup( 0, bodygroup ) -- Apply ammo type bodygroup
 					models[index] = model
 				end
 			end
@@ -297,6 +296,7 @@ do --MARK: Ammo rendering
 								model:SetNoDraw( true )
 								model:DrawShadow( false )
 								model:EnableMatrix( "RenderMultiply", scaleMatrix )
+								model:SetBodygroup( 0, bodygroup ) -- Apply ammo type bodygroup
 								models[index] = model
 							end
 						end

@@ -9,7 +9,7 @@ function Ammo:OnLoaded()
 
 	self.Name		 = "Hollow Point"
 	self.SpawnIcon   = "acf/icons/shell_hp.png"
-	self.Model		 = "models/munitions/round_100mm_shot.mdl"
+	self.Bodygroup   = 0 -- Use AP bodygroup (no specific HP variant)
 	self.Description = "#acf.descs.ammo.hp"
 	self.Blacklist = ACF.GetWeaponBlacklist({
 		MG = true,
