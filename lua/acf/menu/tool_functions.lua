@@ -601,6 +601,7 @@ do -- Ghost entity handling
 	local function GetModelDimensions(EntData)
 		local Scale = EntData.Scale
 		local ModelSize = ModelData.GetModelSize(EntData.Model)
+		if not ModelSize then return Vector(0, 0, 0), Vector(0, 0, 0), Vector(0, 0, 0) end
 		local HeightOffset = Vector(0, 0, ModelSize.z / 2)
 
 		if Scale and not Scale:IsEqualTol(DefaultScale, 0) then
