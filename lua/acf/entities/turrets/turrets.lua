@@ -283,7 +283,7 @@ do	-- Turret drives
 
 					if TurretTbl.HasArc then
 						if TurretTbl.Manual then
-							return Rotator:WorldToLocalAngles(Turret:LocalToWorldAngles(Angle(math.Clamp(-TurretTbl.DesiredDeg, TurretTbl.MinDeg, TurretTbl.MaxDeg), 0, 0))).pitch
+							return Rotator:WorldToLocalAngles(Turret:LocalToWorldAngles(Angle(-math.Clamp(TurretTbl.DesiredDeg, TurretTbl.MinDeg, TurretTbl.MaxDeg), 0, 0))).pitch
 						else
 							local LocalDesiredAngle = ClampAngle(Turret:WorldToLocalAngles(TurretTbl.DesiredAngle) - Angle(StabAmt, 0, 0), Angle(-TurretTbl.MaxDeg, 0, 0), Angle(-TurretTbl.MinDeg, 0, 0))
 
