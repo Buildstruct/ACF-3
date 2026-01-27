@@ -101,8 +101,8 @@ CrewModels.Register("Sitting_Small", {
     Name = "Sitting Small Crew Member",
     Description = "This posture best suits a driver/gunner in small vehicles.",
     Model = "models/acf/core/c_seated_s.mdl",
-    ScanOffsetL = Vector(0, -16, 25),
-    MouthOffsetL = Vector(0, -18, 17),
+    ScanOffsetL = Vector(0, -18, 17),
+    MouthOffsetL = Vector(0, -16, 25),
     BaseErgoScores = {
         Gunner = 0.65,
         Loader = 0.45,
