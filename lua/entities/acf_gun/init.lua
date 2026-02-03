@@ -407,7 +407,7 @@ do -- Spawn and Update functions --------------------------------
 
 	hook.Add("ACF_OnSetupInputs", "ACF Weapon Fuze", function(Entity, List)
 		if Entity:GetClass() ~= "acf_gun" then return end
-		if Entity.Caliber <= ACF.MinFuzeCaliber then return end
+		if Entity.Caliber < ACF.MinFuzeCaliber then return end
 
 		List[#List + 1] = "Fuze (Sets the delay in seconds in which explosive rounds will detonate after leaving the weapon.)"
 	end)
