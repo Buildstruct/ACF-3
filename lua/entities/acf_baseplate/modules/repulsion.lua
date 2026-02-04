@@ -56,6 +56,8 @@ hook.Add("Think", "ACF_Baseplate_Collision_Simulation", function()
 			if Contraption1 == Contraption2 then continue end
 
 			if not ACF.DoesContraptionHavePlayers(Contraption1) or not ACF.DoesContraptionHavePlayers(Contraption2) then continue end
+			-- Final chance for addons to handle it. If something returns false, we continue.
+			if hook.Run("ACF_OnBaseplateRepulsion", BP1, BP2) == false then continue end
 
 			local IntersectionDistance, IntersectionDirection, IntersectionCenter = CalculateSphereIntersection(Pos1, Radius1, Pos2, Radius2)
 
