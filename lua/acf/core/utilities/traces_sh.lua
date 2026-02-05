@@ -59,7 +59,7 @@ do -- ACF.trace
 	local function TestTraceable(Ent)
 		local EntTbl = Ent:GetTable()
 
-		if EntTbl._IsSpherical then return true end
+		if ACF.FilterMakeSpherical and EntTbl._IsSpherical then return true end
 		if EntTbl.ACF_InvisibleToTrace then return true end
 
 		if EntTbl.ACF_KillableButIndestructible and EntTbl.ACF and EntTbl.ACF.Health <= 0 then

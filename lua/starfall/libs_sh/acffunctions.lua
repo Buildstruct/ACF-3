@@ -636,6 +636,13 @@ if SERVER then
 		return CreateEntity(pos, ang, data, "acf_gun", "Weapon")
 	end
 
+	--- Returns the internal torque multiplier
+	-- @server
+	-- @return number ACF.TorqueMult
+	function acf_library.getTorqueMult()
+		return ACF.TorqueMult or 1
+	end
+
 	--- Returns true if This entity contains sensitive info and is not accessable to us
 	-- @server
 	-- @return boolean True if the entity contans sensitive info

@@ -90,6 +90,11 @@ e2function number acfInfoRestricted()
 	return ACF.RestrictInfo and 1 or 0
 end
 
+-- Returns the internal torque multiplier
+e2function number acfTorqueMult()
+	return ACF.TorqueMult or 1
+end
+
 __e2setcost(5)
 
 -- Returns the full name of an ACF entity

@@ -90,6 +90,7 @@ function Ballistics.CalcBulletFlight(Bullet)
 		Bullet:PostCalcFlight()
 	end
 
+	debugoverlay.Line(Bullet.Pos, Bullet.NextPos, 5, Bullet.Color)
 	Bullet.Pos = Bullet.NextPos
 end
 
@@ -235,11 +236,11 @@ function Ballistics.TestFilter(Entity, Bullet)
 
 	local EntTbl = Entity:GetTable()
 
-	if EntTbl._IsSpherical then return false end -- TODO: Remove when damage changes make props unable to be destroyed, as physical props can have friction reduced (good for wheels)
+	if ACF.FilterMakeSpherical and EntTbl._IsSpherical then return false end -- TODO: Remove when damage changes make props unable to be destroyed, as physical props can have friction reduced (good for wheels)
 	if EntTbl.ACF_InvisibleToBallistics then return false end
 	if EntTbl.ACF_KillableButIndestructible then
 		local EntACF = EntTbl.ACF
-	    if EntACF and EntACF.Health <= 0 then return false end
+		if EntACF and EntACF.Health <= 0 then return false end
 	end
 	if EntTbl.ACF_TestFilter then return EntTbl.ACF_TestFilter(Entity, Bullet) end
 

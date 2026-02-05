@@ -1,12 +1,5 @@
 local ACF = ACF
-
-local GridMaterial = CreateMaterial("acf_bp_vis_grid2", "UnlitGeneric", {
-	["$basetexture"] = "hunter/myplastic",
-	["$model"] = 1,
-	["$translucent"] = 1,
-	["$vertexalpha"] = 1,
-	["$vertexcolor"] = 1
-})
+local BaseplateTypes = ACF.Classes.BaseplateTypes
 
 local function CreateMenu(Menu)
 	ACF.SetToolMode("acf_menu", "Spawner", "Baseplate")
@@ -22,7 +15,7 @@ local function CreateMenu(Menu)
 					    	Menu:AddSimpleClassUserVar(VerificationCtx, "",                                     "BaseplateType", "Name", "Icon")
 	local SizeX           = Menu:AddNumberUserVar(     VerificationCtx, "#acf.menu.baseplates.plate_width",     "Width")
 	local SizeY           = Menu:AddNumberUserVar(     VerificationCtx, "#acf.menu.baseplates.plate_length",    "Length")
-						    Menu:AddNumberUserVar(     VerificationCtx, "#acf.menu.baseplates.plate_thickness", "Thickness")
+	local SizeZ			  = Menu:AddNumberUserVar(     VerificationCtx, "#acf.menu.baseplates.plate_thickness", "Thickness")
 						    Menu:AddBooleanUserVar(    VerificationCtx, "#acf.menu.baseplates.disable_alt_e",   "DisableAltE")
 	local GForceTicks     = Menu:AddNumberUserVar(     VerificationCtx, "#acf.menu.baseplates.gforce_ticks",    "GForceTicks")
 	local GForceTicksInfo = Menu:AddHelp("#acf.menu.baseplates.gforce_ticks_info")
@@ -31,31 +24,34 @@ local function CreateMenu(Menu)
 	local BaseplateName     = BaseplateBase:AddTitle()
 	local BaseplateDesc     = BaseplateBase:AddLabel()
 
+	local PreviewSettings = {
+		FOV = 120,
+		Height = 120,
+		AngOffset = Angle(0, -90, 0),
+	}
+	local BaseplatePreview = BaseplateBase:AddModelPreview("models/holograms/cube.mdl", true, "Primary")
+	BaseplatePreview:UpdateSettings(PreviewSettings)
+	BaseplatePreview:UpdateModel("models/holograms/cube.mdl", "hunter/myplastic")
+
 	BaseplateName.ACF_OnUpdate = function(self, KeyChanged, _, Value) if KeyChanged == "BaseplateType" then self:SetText(Value.Name) end end
 	BaseplateDesc.ACF_OnUpdate = function(self, KeyChanged, _, Value) if KeyChanged == "BaseplateType" then self:SetText(Value.Description) end end
 	GForceTicks.ACF_OnUpdate   = function(self, KeyChanged, _, Value)
 		if KeyChanged == "BaseplateType" then
-			self:SetVisible(Value == ACF.Classes.BaseplateTypes.Get("Aircraft"))
+			self:SetVisible(Value == BaseplateTypes.Get("Aircraft"))
 			self:GetParent():InvalidateLayout()
 		end
 	end
 	GForceTicksInfo.ACF_OnUpdate = GForceTicks.ACF_OnUpdate
 
-	local Vis = BaseplateBase:AddPanel("DPanel")
-	Vis:SetSize(30, 256)
-
-	function Vis:Paint(ScrW, ScrH)
-		local W, H = SizeX:GetValue(), SizeY:GetValue()
-		self.CamDistance = math.max(W, H, 60) * 1
-
-		local Z = (math.max(1, ScrH / H) / math.max(1, ScrW / W)) * 2
-		surface.SetDrawColor(255, 255, 255)
-		surface.SetMaterial(GridMaterial)
-		surface.DrawTexturedRectRotated(ScrW / 2, ScrH / 2, W * Z, H * Z, 0)
-
-		surface.SetDrawColor(255, 70, 70); surface.DrawRect((ScrW / 2) - 1, ScrH / 2, 3, H / 2 * Z)
-		surface.SetDrawColor(70, 255, 70); surface.DrawRect(ScrW / 2, (ScrH / 2) - 1, W / 2 * Z, 3)
+	local function UpdatePreviewSize()
+		local X, Y, Z = SizeX:GetValue(), SizeY:GetValue(), SizeZ:GetValue()
+		BaseplatePreview:SetModelScale(Vector(X, Y, Z))
 	end
+	local function ProducerSelfUpdate(Self, _, Producer) if Self == Producer then UpdatePreviewSize() end end
+	SizeX.ACF_OnUpdate = ProducerSelfUpdate
+	SizeY.ACF_OnUpdate = ProducerSelfUpdate
+	SizeZ.ACF_OnUpdate = ProducerSelfUpdate
+	UpdatePreviewSize()
 
 	local BaseplateConvertInfo = Menu:AddCollapsible("#acf.menu.baseplates.convert")
 	local BaseplateConvertText = ""

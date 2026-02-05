@@ -329,7 +329,7 @@ function Damage.createExplosion(Position, FillerMass, FragMass, Filter, DmgInfo)
 
 				FragResult  = Damage.dealDamage(HitEnt, FragDmg, DmgInfo)
 				Losses      = Losses + FragResult.Loss * 0.5
-				Penetration = Penetration or FragResult.Overkill > 0
+				Penetration = Penetration or (FragResult.Overkill or 0) > 0 -- TODO: Sometimes Overkill ends up being nil, but that should never be the case??
 			end
 		end
 

@@ -74,7 +74,7 @@ do -- Random timer crew stuff
 
 		TraceConfig.start = CrewPos
 		TraceConfig.endpos = BreechPos
-		TraceConfig.filter = function(x) return not (x == Gun or x.noradius or x == Crew or x:GetOwner() ~= Gun:GetOwner() or x:IsPlayer() or ACF.GlobalFilter[x:GetClass()]) end
+		TraceConfig.filter = function(x) return not (x == Gun or x.noradius or x == Crew or x == Gun:GetParent() or x:GetOwner() ~= Gun:GetOwner() or x:IsPlayer() or ACF.GlobalFilter[x:GetClass()]) end
 		local tr = TraceLine(TraceConfig)
 
 		Debug.Line(CrewPos, tr.HitPos, 1, Green, true)
@@ -89,10 +89,15 @@ do -- Random timer crew stuff
 
 	function ENT:UpdateLoadMod()
 		self.CrewsByType = self.CrewsByType or {}
-		local Sum1 = ACF.WeightedLinkSum(self.CrewsByType.Loader or {}, GetReloadEff, self, self.CurrentCrate or self)
-		local Sum2 = ACF.WeightedLinkSum(self.CrewsByType.Commander or {}, GetReloadEff, self, self.CurrentCrate or self)
-		local Sum3 = ACF.WeightedLinkSum(self.CrewsByType.Pilot or {}, GetReloadEff, self, self.CurrentCrate or self)
-		self.LoadCrewMod = math.Clamp(Sum1 + Sum2 + Sum3, ACF.CrewFallbackCoef, ACF.LoaderMaxBonus)
+		if IsValid(self.Autoloader) and self.Autoloader.ACF.Health > 0 then
+			local Sum1 = self.Autoloader:GetReloadEffAuto(self, self.CurrentCrate)
+			self.LoadCrewMod = math.Clamp(Sum1, ACF.AutoloaderFallbackCoef, ACF.AutoloaderMaxBonus)
+		else
+			local Sum1 = ACF.WeightedLinkSum(self.CrewsByType.Loader or {}, GetReloadEff, self, self.CurrentCrate or self)
+			local Sum2 = ACF.WeightedLinkSum(self.CrewsByType.Commander or {}, GetReloadEff, self, self.CurrentCrate or self)
+			local Sum3 = ACF.WeightedLinkSum(self.CrewsByType.Pilot or {}, GetReloadEff, self, self.CurrentCrate or self)
+			self.LoadCrewMod = math.Clamp(Sum1 + Sum2 + Sum3, ACF.CrewFallbackCoef, ACF.LoaderMaxBonus)
+		end
 
 		-- Check space behind breech
 		if ACF.LegalChecks and self.BulletData and self.ClassData.BreechConfigs then
@@ -104,7 +109,7 @@ do -- Random timer crew stuff
 
 			TraceConfig.start = wp1
 			TraceConfig.endpos = wp2
-			TraceConfig.filter = function(x) return not (x == self or x.noradius or x:GetOwner() ~= self:GetOwner() or x:IsPlayer() or ACF.GlobalFilter[x:GetClass()]) end
+			TraceConfig.filter = function(x) return not (x == self or x == self:GetParent() or x.noradius or x.IsACFAutoloader or x:GetOwner() ~= self:GetOwner() or x:IsPlayer() or ACF.GlobalFilter[x:GetClass()]) end
 			local tr = TraceLine(TraceConfig)
 
 			Debug.Line(wp1, tr.HitPos, 1, Green, true)
@@ -161,7 +166,7 @@ do -- Random timer crew stuff
 		return self.AccuracyCrewMod
 	end
 
-	function ENT:UpdateFilter()
+	function ENT:UpdateRotationFilter()
 		local Vertical = self:GetParent()
 		local Rotator = Vertical.Rotator
 		local Filter = {}
@@ -170,10 +175,7 @@ do -- Random timer crew stuff
 			for K, V in pairs(Rotator:GetChildren()) do
 				local Child = isnumber(K) and V or K
 				if not IsValid(Child) then continue end
-
-				if Child.IsACFEntity then
-					Filter[Child] = true
-				end
+				Filter[Child] = true
 			end
 
 			self.RotationFilter = Filter
@@ -195,7 +197,7 @@ do -- Random timer crew stuff
 
 		TraceConfig.start = ReferenceBreechPos
 		TraceConfig.endpos = CurrentBreechPos
-		TraceConfig.filter = function(x) return not (x == self or x.noradius or x:GetOwner() ~= self:GetOwner() or x:IsPlayer() or ACF.GlobalFilter[x:GetClass()] or self.RotationFilter[x]) end
+		TraceConfig.filter = function(x) return not (x == self or x == self:GetParent() or x.noradius or x:GetOwner() ~= self:GetOwner() or x:IsPlayer() or ACF.GlobalFilter[x:GetClass()] or self.RotationFilter[x]) end
 		local tr = TraceLine(TraceConfig)
 
 		if tr.Hit then
@@ -405,14 +407,13 @@ do -- Spawn and Update functions --------------------------------
 
 	hook.Add("ACF_OnSetupInputs", "ACF Weapon Fuze", function(Entity, List)
 		if Entity:GetClass() ~= "acf_gun" then return end
-		if Entity.Caliber <= ACF.MinFuzeCaliber then return end
+		if Entity.Caliber < ACF.MinFuzeCaliber then return end
 
 		List[#List + 1] = "Fuze (Sets the delay in seconds in which explosive rounds will detonate after leaving the weapon.)"
 	end)
 
 	hook.Add("ACF_OnSetupInputs", "ACF Cyclic ROF", function(Entity, List)
 		if Entity:GetClass() ~= "acf_gun" then return end
-		if not Entity.BaseCyclic then return end
 
 		List[#List + 1] = "Rate of Fire (Sets the rate of fire of the weapon in rounds per minute)"
 	end)
@@ -474,7 +475,7 @@ do -- Spawn and Update functions --------------------------------
 		ACF.AugmentedTimer(function(Config) Entity:UpdateLoadMod(Config) end, function() return IsValid(Entity) end, nil, {MinTime = 0.5, MaxTime = 1})
 		ACF.AugmentedTimer(function(Config) Entity:UpdateAccuracyMod(Config) end, function() return IsValid(Entity) end, nil, {MinTime = 0.5, MaxTime = 1})
 		ACF.AugmentedTimer(function(Config) Entity:CheckBreechClipping(Config) end, function() return IsValid(Entity) end, nil, {MinTime = 1, MaxTime = 2})
-		ACF.AugmentedTimer(function(Config) Entity:UpdateFilter(Config) end, function() return IsValid(Entity) end, nil, {MinTime = 1, MaxTime = 2})
+		ACF.AugmentedTimer(function(Config) Entity:UpdateRotationFilter(Config) end, function() return IsValid(Entity) end, nil, {MinTime = 1, MaxTime = 2})
 
 		hook.Run("ACF_OnSpawnEntity", "acf_gun", Entity, Data, Class, Weapon)
 
@@ -599,6 +600,15 @@ do -- Metamethods --------------------------------
 				return false, "The ammo type in this crate cannot be used for this weapon."
 			end
 
+			-- Drums (Cylinder shape) can only be used by automatic weapons
+			-- The menu shouldn't be letting someone spawn a drum like this, but just in case
+			if Crate.Shape == "Cylinder" then
+				local Class = This.ClassData
+				if not (Class and Class.IsAutomatic) then
+					return false, "Drums can only be used by automatic weapons."
+				end
+			end
+
 			if not BeltFedCheck(This, Crate) then return false, "Belt fed weapons must have their ammo crate mounted on the same turret ring/baseplate." end
 
 			return true
@@ -708,10 +718,12 @@ do -- Metamethods --------------------------------
 		end)
 
 		ACF.AddInputAction("acf_gun", "Rate of Fire", function(Entity, Value)
-			if not Entity.BaseCyclic then return end
-
-			Entity.Cyclic     = math.Clamp(Value, 30, Entity.BaseCyclic)
-			Entity.ReloadTime = 60 / Entity.Cyclic
+			if Entity.BaseCyclic then
+				Entity.Cyclic     = math.Clamp(Value, 30, Entity.BaseCyclic)
+				Entity.ReloadTime = 60 / Entity.Cyclic
+			else
+				Entity.TargetReloadTime = math.Clamp(60 / Value, 0, 100)
+			end
 		end)
 
 		-- Logging breech locations
@@ -720,12 +732,10 @@ do -- Metamethods --------------------------------
 			if not IsValid(Ref) then return end
 			if Ref:GetClass() == "acf_turret_rotator" then Ref = NewParent.Turret end
 
-			local MuzzlePos = self:GetAttachment(1).Pos
-			local Length = (self:OBBMaxs().x - self:OBBMins().x)
-			local BreechPos = MuzzlePos - self:GetForward() * Length
+			local WorldBreechPos = self:LocalToWorld(self.BreechPos)
 			self.BreechReference = Ref
-			self.BreechLocalToRef = Ref:WorldToLocal(BreechPos)	-- Local Reference position of breech
-			self.BreechLocalToGun = self:WorldToLocal(BreechPos)	-- Local Current position of breech
+			self.BreechLocalToRef = Ref:WorldToLocal(WorldBreechPos)	-- Local Reference position of breech
+			self.BreechLocalToGun = self:WorldToLocal(WorldBreechPos)	-- Local Current position of breech
 		end
 
 		-- Logging contraption wide bullet filter
@@ -849,6 +859,11 @@ do -- Metamethods --------------------------------
 				return
 			end
 
+			-- Call muzzle effect BEFORE creating bullets to avoid effect throttling
+			-- (FL ammo can create 64+ bullet effects which may saturate the effect queue)
+			self:MuzzleEffect()
+			self:Recoil()
+
 			-- Set in air if GLATGM is used
 			local GLATGM = AmmoType:Create(self, BulletData)
 			if IsValid(GLATGM) and AmmoType.ID == "GLATGM" then
@@ -857,9 +872,6 @@ do -- Metamethods --------------------------------
 					if IsValid(self) then WireLib.TriggerOutput(self, "In Air", 0) end
 				end)
 			end
-
-			self:MuzzleEffect()
-			self:Recoil()
 
 			-- Mark contraption as in combat when firing
 			local Contraption = self:GetContraption()
@@ -954,6 +966,7 @@ do -- Metamethods --------------------------------
 			if IsValid(self.FreeCrate) then self.FreeCrate:Consume(-1) end -- Put a shell back in the crate, if possible
 
 			local IdealTime, Manual = ACF.CalcReloadTimeMag(self.Caliber, self.ClassData, self.WeaponData, self.BulletData, self)
+			if self.TargetReloadTime then IdealTime = math.max(IdealTime, self.TargetReloadTime) end
 			local Time = Manual and IdealTime / self.LoadCrewMod or IdealTime
 
 			self:ReloadEffect(Reload and Time * 2 or Time)
@@ -998,6 +1011,7 @@ do -- Metamethods --------------------------------
 
 				local BulletData = Crate.BulletData
 				local IdealTime, Manual = ACF.CalcReloadTime(self.Caliber, self.ClassData, self.WeaponData, BulletData, self)
+				if self.TargetReloadTime then IdealTime = math.max(IdealTime, self.TargetReloadTime) end
 				local Time = Manual and IdealTime / self.LoadCrewMod or IdealTime
 
 				self.ReloadTime   = Time

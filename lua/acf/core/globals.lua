@@ -180,6 +180,7 @@ do -- ACF global vars
 	ACF.LinkDistance         = 650 -- Maximum distance, in inches, at which components will remain linked with each other
 	ACF.KillIconColor        = Color(200, 200, 48)
 	ACF.NetMessageSizeLimit  = 13	-- Maximum size of a net message in bytes (IF SET TOO LOW, CERTAIN MODELS MAY NOT BE NETWORKED PROPERLY)
+	ACF.FilterMakeSpherical  = true -- Whether Make Spherical entities should be filtered out of ballistics traces. Not intended to be disabled in actual gameplay
 
 	-- Unit Conversion
 	ACF.MeterToInch          = 39.3701 -- Meters to inches
@@ -209,19 +210,27 @@ do -- ACF global vars
 
 	-- WE WANT NO INTERACTION WITH THESE ENTITIES
 	ACF.GlobalFilter = {
-		gmod_ghost = true,
-		acf_debris = true,
-		prop_ragdoll = true,
-		gmod_wire_hologram = true,
-		starfall_hologram = true,
-		prop_vehicle_crane = true,
-		prop_dynamic = true,
-		npc_strider = true,
-		npc_dog = true,
-		phys_bone_follower = true,
+		acf_debris            = true,
+
+		gmod_ghost            = true,
+
 		gmod_wire_expression2 = true,
-		starfall_processor = true,
-		sent_prop2mesh = true,
+		gmod_wire_hologram    = true,
+
+		phys_bone_follower    = true,
+		prop_dynamic          = true,
+		prop_ragdoll          = true,
+		prop_vehicle_crane    = true,
+
+		npc_dog               = true,
+		npc_strider           = true,
+
+		sent_prop2mesh        = true,
+
+		starfall_hologram     = true,
+		starfall_prop         = true,
+		starfall_screen       = true,
+		starfall_processor    = true,
 	}
 
 	-- THESE ENTITIES ARE FILTERED BUT CAN STILL BE ARMORED, FOR BACKWARDS COMPATIBILITY
@@ -313,6 +322,7 @@ do -- ACF global vars
 		acf_groundloader = true,
 		acf_supply = true,
 		acf_waterjet = true,
+		acf_autoloader = true,
 		prop_physics = true,
 		prop_vehicle_prisoner_pod = true
 	}
@@ -328,7 +338,7 @@ do -- ACF global vars
 	ACF.FuelSupplyColor    = Color(76, 201, 250, 10) -- The color to use for the fuel supply effect
 	ACF.LiIonED            = 0.458 -- li-ion energy density: kw hours / liter
 	ACF.SupplyDistance     = 300 -- Distance in which supply units distribute mass to containers.
-	ACF.SupplyMassRate     = 0.00009417 -- kg per second per cubic inch of supply unit volume (no distance attenuation)
+	ACF.SupplyMassRate     = 0.007017 -- kg per second per cubic inch of supply unit volume (no distance attenuation)
 	ACF.RefuelSpeed        = 700 -- Refueling speed for fuel tanks
 
 	-- Crew
@@ -359,6 +369,22 @@ do -- ACF global vars
 	ACF.LoaderWorstDist 	= 300	-- Distance after which loaders are least effective
 	ACF.LoaderMaxBonus 		= 2		-- Maximum bonus loaders can give to reload time
 
+	ACF.MinAutoloaderCaliber = 60	-- Minimum caliber for autoloaders
+	ACF.MaxAutoloaderCaliber = 280	-- Maximum caliber for autoloaders
+	ACF.MinAutoloaderLength = 50	-- Minimum shell length for autoloaders (mm)
+	ACF.MaxAutoloaderLength = 200	-- Maximum shell length for autoloaders (cm)
+	ACF.AutoloaderMaxAngleDiff = 1 -- Maximum deviation between autoloader and breech to be aligned (deg)
+
+	ACF.AutoloaderFallbackCoef = 0.1 -- Minimum possible autoloader efficiency
+	ACF.AutoloaderMaxBonus = 4 	-- Maximum bonus autoloaders can give to reload time
+
+	ACF.AutoloaderBestDistHorizontal = 6 -- Horizontal distance before which autoloaders are most effective
+	ACF.AutoloaderWorstDistHorizontal = 1000 -- Horizontal distance after which autoloaders are least effective
+	ACF.AutoloaderBestDistVertical = 6 -- Vertical distance before which autoloaders are most effective
+	ACF.AutoloaderWorstDistVertical = 100 -- Vertical distance after which autoloaders are least effective
+	ACF.AutoloaderBestDistAngular = 0.1 -- Angular distance (degrees) before which autoloaders are most effective
+	ACF.AutoloaderWorstDistAngular = 90 -- Angular distance (degrees) after which autoloaders are least effective
+
 	ACF.InitReloadDelay		= 10		-- Delay after spawning that belt feds are loaded
 
 	ACF.CommanderCapacity 	= 3		-- The number of crew members a commander can handle before focus reduces
@@ -370,7 +396,7 @@ do -- ACF global vars
 	ACF.GearboxMassScale   = 3 -- The exponent to determine the gearbox's mass in proportion to its scale
 	ACF.GearboxTorqueScale = 3 -- The exponent to determine the gearbox's torque in proportion to its scale
 	-- The arbitrary multiplier for the final amount of torque; TODO: we should probably implement this in a better way
-	ACF.DefineSetting("TorqueMult", 5, "The arbitrary multiplier for the final amount of torque. Stopgap measure until a future engine update.", ACF.FloatDataCallback(0, 10, 2))
+	ACF.DefineSetting("TorqueMult", 5, "Arbitrary torque multiplier has been set to a factor of %.2f. Stopgap measure until a future engine update.", ACF.FloatDataCallback(0, 10, 2))
 	ACF.MinGearRatio       = -10 -- The minimum value that a gear's ratio can be set to
 	ACF.MaxGearRatio       = 10 -- The maximum value that a gear's ratio can be set to
 	ACF.MinCVTRatio        = 1 -- The minimum value that a CVT's ratio can be set to

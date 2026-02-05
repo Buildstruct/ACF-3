@@ -103,7 +103,7 @@ do
 end
 
 -- Fonts
-local RegisterFonts
+local RegisterFontsAndScale
 do
     -- "On Linux, using the embedded font name tends to be unreliable. I recommend using the font's (case-sensitive) file name, 
     --  like 'Roboto-Regular.ttf', instead. You can use system.IsLinux to help determine which name to use."
@@ -118,12 +118,14 @@ do
     -- local Prototype = GetFontForOS(2)
     local Conduit = GetFontForOS(3)
 
-    function RegisterFonts(Scale)
+    local OverlayScaleMult = 1
+    function RegisterFontsAndScale(Scale)
         -- Designed for a 1080p monitor, this scales it down.
-        Scale = Scale * (ScrH() / 1080)
+        local ScaleDown = 0.85 -- The overlay is a bit bigger than it used to be, this tries to help with that
+        OverlayScaleMult = Scale * (ScrH() / 1080) * ScaleDown
         surface.CreateFont("ACF_OverlayHeaderBackground", {
             font = Conduit,
-            size = 40 * Scale,
+            size = 40 * OverlayScaleMult,
             weight = 900,
             blursize = 6,
             scanlines = 4,
@@ -132,7 +134,7 @@ do
         })
         surface.CreateFont("ACF_OverlayHeader", {
             font = Conduit,
-            size = 40 * Scale,
+            size = 40 * OverlayScaleMult,
             weight = 900,
             blursize = 0,
             scanlines = 2,
@@ -142,7 +144,7 @@ do
 
         surface.CreateFont("ACF_OverlaySubHeaderBackground", {
             font = Conduit,
-            size = 32 * Scale,
+            size = 32 * OverlayScaleMult,
             weight = 500,
             blursize = 6,
             scanlines = 4,
@@ -151,7 +153,7 @@ do
         })
         surface.CreateFont("ACF_OverlaySubHeader", {
             font = Conduit,
-            size = 32 * Scale,
+            size = 32 * OverlayScaleMult,
             weight = 500,
             blursize = 0,
             scanlines = 2,
@@ -161,7 +163,7 @@ do
 
         surface.CreateFont("ACF_OverlayText", {
             font = Conduit,
-            size = 20 * Scale,
+            size = 20 * OverlayScaleMult,
             weight = 500,
             blursize = 0,
             scanlines = 0,
@@ -170,7 +172,7 @@ do
         })
         surface.CreateFont("ACF_OverlayBoldText", {
             font = Conduit,
-            size = 20 * Scale,
+            size = 20 * OverlayScaleMult,
             weight = 900,
             blursize = 0,
             scanlines = 0,
@@ -179,7 +181,7 @@ do
         })
         surface.CreateFont("ACF_OverlayKeyText", {
             font = Conduit,
-            size = 20 * Scale,
+            size = 20 * OverlayScaleMult,
             weight = 900,
             blursize = 0,
             scanlines = 0,
@@ -188,7 +190,7 @@ do
         })
         surface.CreateFont("ACF_OverlayHealthText", {
             font = Conduit,
-            size = 19 * Scale,
+            size = 19 * OverlayScaleMult,
             weight = 900,
             blursize = 0,
             scanlines = 0,
@@ -197,7 +199,7 @@ do
         })
         surface.CreateFont("ACF_OverlaySubText", {
             font = Conduit,
-            size = 15 * Scale,
+            size = 15 * OverlayScaleMult,
             weight = 500,
             blursize = 0,
             scanlines = 0,
@@ -206,7 +208,7 @@ do
         })
         surface.CreateFont("ACF_OverlaySubKeyText", {
             font = Conduit,
-            size = 15 * Scale,
+            size = 15 * OverlayScaleMult,
             weight = 900,
             blursize = 0,
             scanlines = 0,
@@ -214,6 +216,8 @@ do
             extended = true
         })
     end
+
+    function Overlay.GetScaleMult() return OverlayScaleMult end
 end
 
 
@@ -483,7 +487,7 @@ do
 
     local SCALE_CVAR                    = RegisterCvar("SCALE",                    "1",      "scale multiplier")
     local SCALE_ANIM_CVAR               = RegisterCvar("DO_SCALE_ANIMATION",       "1",      "controls if scale is multiplied on fadein/fadeout")
-    local ALPHA_ANIM_CVAR               = RegisterCvar("DO_ALPHA_ANIMATION",       "1",     "controls if alpha is multiplied on fadein/fadeout")
+    local ALPHA_ANIM_CVAR               = RegisterCvar("DO_ALPHA_ANIMATION",       "1",      "controls if alpha is multiplied on fadein/fadeout")
 
     local function SetupStyle()
         COLOR_DROP_SHADOW            = string.ToColor(COLOR_DROP_SHADOW_CVAR:GetString())
@@ -525,7 +529,7 @@ do
         DoScaleAnimation = SCALE_ANIM_CVAR:GetBool()
         DoAlphaAnimation = ALPHA_ANIM_CVAR:GetBool()
 
-        RegisterFonts(SCALE_CVAR:GetFloat())
+        RegisterFontsAndScale(SCALE_CVAR:GetFloat())
     end
     SetupStyle()
     for _, v in ipairs(registered) do

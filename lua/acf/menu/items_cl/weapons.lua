@@ -10,9 +10,18 @@ local CreateControl, IsScalable
 ---Note that this could be a weapon group item if the weapon isn't scalable.
 local function UpdatePreview(Base, Data)
 	local Preview = Base.Preview
+	local Class   = Current.Class
+	local Caliber = Current.Caliber
+	local Weapon  = Current.Weapon
 
 	Preview:UpdateModel(Data.Model)
 	Preview:UpdateSettings(Data.Preview)
+
+	-- Set scale to 1 if Weapon exists (non scaled lmao), or relative caliber otherwise
+	local Scale   = Weapon and 1 or (Caliber / Class.Caliber.Base * (Class.ScaleFactor or 1))
+	local Preview = Base.Preview
+
+	Preview:SetModelScale(Scale, true)
 end
 
 ---Updates the current weapon class controls on the menu.
@@ -75,6 +84,7 @@ CreateControl = function(Base)
 			Current.Caliber = Caliber
 
 			ACF.UpdateAmmoMenu(Menu)
+			UpdatePreview(Base, Current.Class)
 
 			return Caliber
 		end)
@@ -183,13 +193,19 @@ local function CreateMenu(Menu)
 
 	Menu:AddTitle("#acf.menu.weapons.settings")
 
-	local ClassBase  = Menu:AddPanel("ACF_Panel")
-	local ClassList  = ClassBase:AddComboBox()
+	-- Weapon Settings Section (collapsible)
+	local WeaponBase = Menu:AddCollapsible("#acf.menu.weapons.weapon_info", true, "icon16/monitor_edit.png")
+
+	-- Weapon type dropdown (inside collapsible)
+	local ClassList  = WeaponBase:AddComboBox()
 	ClassList:SetName("WeaponClassList")
-	local WeaponBase = Menu:AddCollapsible("#acf.menu.weapons.weapon_info", nil, "icon16/monitor_edit.png")
+
+	-- Panel for dynamic controls (caliber slider or weapon list)
+	local ClassBase  = WeaponBase:AddPanel("ACF_Panel")
+
 	local EntName    = WeaponBase:AddTitle()
 	local ClassDesc  = WeaponBase:AddLabel()
-	local EntPreview = WeaponBase:AddModelPreview(nil, true)
+	local EntPreview = WeaponBase:AddModelPreview(nil, true, "Primary")
 	local EntData    = WeaponBase:AddLabel()
 	local BreechIndex = WeaponBase:AddComboBox()
 	BreechIndex:SetName("WeaponBreechIndex")

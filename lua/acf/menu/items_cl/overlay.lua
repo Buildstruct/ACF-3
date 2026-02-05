@@ -41,9 +41,28 @@ ACF.AddClientSettings(501, "Overlay", function(Base)
         State:AddSize("Size element", 1, 1, 2)
         State:AddCoordinates("Coordinates element", 6039.13, -501.582, -11079.23)
         State:AddHeader("Specialized Elements", 2)
-        State:AddGearRatio("GearRatio element", 0.2, "", false)
+        State:AddGearRatio("Gear Ratio element", 0.2, "", false)
+        State:AddEnginePower("Engine Power element", 256)
+        State:AddEngineTorque("Engine Torque element", 512)
 
     State:End()
+    local function LinkToConVar(Element, SetValue, OnValueChanged, Cvar, CvarGet, CvarSet, Delay)
+        if Delay then
+            Element[OnValueChanged] = function(_, Value)
+                timer.Create("ACF_WaitForConVarToStabilize_" .. Cvar, Delay, 1, function()
+                    CvarSet(GetConVar(Cvar), Value)
+                end)
+            end
+        else
+            Element[OnValueChanged] = function(_, Value)
+                CvarSet(GetConVar(Cvar), Value)
+            end
+        end
+        Element[SetValue](Element, CvarGet(GetConVar(Cvar)))
+        return Element
+    end
+    local CONVAR = FindMetaTable("ConVar")
+    LinkToConVar(Base:AddSlider("Overlay Scale", 0, 3, 2), "SetValue", "OnValueChanged", "acf_overlay_scale", CONVAR.GetFloat, CONVAR.SetFloat, 0.1)
 
     hook.Add("PostRenderVGUI", Base, function()
         local Parent = Base:GetParent()

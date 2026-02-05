@@ -8,16 +8,19 @@ local HPColor     = Color(255, 65, 65)
 local TorqueColor = Color(65, 65, 255)
 local IdleColor   = Color(127, 0, 0)
 
+local acf_menu_multiplytorquemult = CreateClientConVar("acf_menu_multiplytorquemult", "0", true, false, "If true, engine power/torque elements in the menu & overlay will be multiplied by the internal torque multiplier.\nIt should be noted that the torque multiplier is a temporary stopgap for internal code issues, and will be removed in a future mobility update.")
+
+local function GetTorqueMult() return acf_menu_multiplytorquemult:GetBool() and ACF.GetServerData("TorqueMult") or 1 end
 local function UpdateEngineStats(Label, Data)
 	local RPM        = Data.RPM
 	local PeakTqRPM  = math.Round(Data.PeakTqRPM)
-	local PeakkW     = Data.PeakPower
+	local PeakkW     = Data.PeakPower * GetTorqueMult()
 	local PeakkWRPM  = Data.PeakPowerRPM
 	local MinPower   = RPM.PeakMin
 	local MaxPower   = RPM.PeakMax
 	local Mass       = ACF.GetProperMass(Data.Mass)
-	local Torque     = math.Round(Data.Torque)
-	local TorqueFeet = math.Round(Data.Torque * ACF.NmToFtLb)
+	local Torque     = math.Round(Data.Torque * GetTorqueMult())
+	local TorqueFeet = math.Round(Data.Torque * GetTorqueMult() * ACF.NmToFtLb)
 	local Type       = EngineTypes.Get(Data.Type)
 	local Efficiency = Type.Efficiency
 	local FuelList   = ""
@@ -65,7 +68,7 @@ local function CreateMenu(Menu)
 	local EngineBase = Menu:AddCollapsible("#acf.menu.engines.engine_info", nil, "icon16/monitor_edit.png")
 	local EngineName = EngineBase:AddTitle()
 	local EngineDesc = EngineBase:AddLabel()
-	local EnginePreview = EngineBase:AddModelPreview(nil, true)
+	local EnginePreview = EngineBase:AddModelPreview(nil, true, "Primary")
 	local EngineStats = EngineBase:AddLabel()
 
 	local PowerGraph = Menu:AddGraph()
@@ -95,6 +98,7 @@ local function CreateMenu(Menu)
 
 	local Min = ACF.ContainerMinSize
 	local Max = ACF.ContainerMaxSize
+	local FuelPreview
 
 	-- Set default fuel tank size values before creating sliders to prevent nil value errors
 	local DefaultFuelSizeX = ACF.GetClientNumber("FuelSizeX", (Min + Max) / 2)
@@ -119,6 +123,11 @@ local function CreateMenu(Menu)
 		TankSize.x = X
 
 		FuelType:UpdateFuelText()
+
+		if FuelPreview then
+			FuelPreview:SetModelScale(TankSize * 12)
+		end
+
 		UpdateSize()
 		return X
 	end)
@@ -133,6 +142,11 @@ local function CreateMenu(Menu)
 		TankSize.y = Y
 
 		FuelType:UpdateFuelText()
+
+		if FuelPreview then
+			FuelPreview:SetModelScale(TankSize * 12)
+		end
+
 		UpdateSize()
 		return Y
 	end)
@@ -147,13 +161,18 @@ local function CreateMenu(Menu)
 		TankSize.z = Z
 
 		FuelType:UpdateFuelText()
+
+		if FuelPreview then
+			FuelPreview:SetModelScale(TankSize * 12)
+		end
+
 		UpdateSize()
 		return Z
 	end)
 
 	local FuelBase = Menu:AddCollapsible("#acf.menu.fuel.tank_info", nil, "icon16/cup_edit.png")
 	local FuelDesc = FuelBase:AddLabel()
-	local FuelPreview = FuelBase:AddModelPreview(nil, true)
+	FuelPreview = FuelBase:AddModelPreview(nil, true, "Secondary")
 	local FuelInfo = FuelBase:AddLabel()
 
 	ACF.SetClientData("PrimaryClass", "acf_engine")
@@ -193,19 +212,19 @@ local function CreateMenu(Menu)
 		UpdateEngineStats(EngineStats, Data)
 
 		PowerGraph:SetXRange(0, Data.RPM.Limit)
-		PowerGraph:SetYRange(0, math.max(math.ceil(Data.PeakPower * ACF.KwToHp), Data.Torque) * 1.1)
+		PowerGraph:SetYRange(0, math.max(math.ceil(Data.PeakPower * GetTorqueMult() * ACF.KwToHp), Data.Torque * GetTorqueMult()) * 1.1)
 		PowerGraph:SetFidelity(10)
 
 		PowerGraph:Clear()
-		PowerGraph:PlotPoint(language.GetPhrase("acf.menu.engines.peak_hp"), Data.PeakPowerRPM, math.Round(Data.PeakPower * ACF.KwToHp), HPColor)
-		PowerGraph:PlotPoint(language.GetPhrase("acf.menu.engines.peak_nm"), Data.PeakTqRPM, math.Round(Data.Torque), TorqueColor)
+		PowerGraph:PlotPoint(language.GetPhrase("acf.menu.engines.peak_hp"), Data.PeakPowerRPM, math.Round(Data.PeakPower * GetTorqueMult() * ACF.KwToHp), HPColor)
+		PowerGraph:PlotPoint(language.GetPhrase("acf.menu.engines.peak_nm"), Data.PeakTqRPM, math.Round(Data.Torque * GetTorqueMult()), TorqueColor)
 
 		PowerGraph:PlotLimitFunction(language.GetPhrase("acf.menu.engines.torque"), Data.RPM.Idle, Data.RPM.Limit, TorqueColor, function(X)
-			return ACF.GetTorque(Data.TorqueCurve, math.Remap(X, Data.RPM.Idle, Data.RPM.Limit, 0, 1)) * Data.Torque
+			return ACF.GetTorque(Data.TorqueCurve, math.Remap(X, Data.RPM.Idle, Data.RPM.Limit, 0, 1)) * Data.Torque * GetTorqueMult()
 		end)
 
 		PowerGraph:PlotLimitFunction(language.GetPhrase("acf.menu.engines.hp"), Data.RPM.Idle, Data.RPM.Limit, HPColor, function(X)
-			return (ACF.GetTorque(Data.TorqueCurve, math.Remap(X, Data.RPM.Idle, Data.RPM.Limit, 0, 1)) * Data.Torque * X) * ACF.KwToHp / 9548.8
+			return (ACF.GetTorque(Data.TorqueCurve, math.Remap(X, Data.RPM.Idle, Data.RPM.Limit, 0, 1)) * Data.Torque * GetTorqueMult() * X) * ACF.KwToHp / 9548.8
 		end)
 
 		PowerGraph:PlotLimitLine(language.GetPhrase("acf.menu.engines.idle_rpm"), false, Data.RPM.Idle, IdleColor)

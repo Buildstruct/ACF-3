@@ -11,7 +11,8 @@ function Ammo:OnLoaded()
 
 	self.Name		 = "High Explosive Anti-Tank"
 	self.SpawnIcon   = "acf/icons/shell_heat.png"
-	self.Model		 = "models/munitions/round_100mm_shot.mdl"
+	self.Bodygroup   = 8 -- HEAT bodygroup index
+	self.MortarBodygroup = 3 -- HEAT mortar submodel
 	self.Description = "#acf.descs.ammo.heat"
 	self.Blacklist = {
 		AC = true,
@@ -182,7 +183,7 @@ function Ammo:BaseConvert(ToolData)
 	Data.LimitVel		= 100 -- Most efficient penetration speed in m/s
 	Data.Ricochet		= 60 -- Base ricochet angle
 	Data.DetonatorAngle	= 75
-	Data.CanFuze		= Data.Caliber * 10 > ACF.MinFuzeCaliber -- Can fuze on calibers > 20mm
+	Data.CanFuze		= Data.Caliber * 10 >= ACF.MinFuzeCaliber -- Can fuze on calibers > 20mm
 
 	self:UpdateRoundData(ToolData, Data, GUIData)
 

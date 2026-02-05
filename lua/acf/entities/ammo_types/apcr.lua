@@ -8,7 +8,7 @@ function Ammo:OnLoaded()
 
 	self.Name		 = "Armor Piercing Composite Rigid"
 	self.SpawnIcon   = "acf/icons/shell_apcr.png"
-	self.Model		 = "models/munitions/round_100mm_ap_shot.mdl"
+	self.Bodygroup   = 2 -- APCR bodygroup index
 	self.Description = "#acf.descs.ammo.apcr"
 	self.Blacklist = ACF.GetWeaponBlacklist({
 		C = true,

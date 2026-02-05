@@ -5,9 +5,12 @@ local Ammo      = AmmoTypes.Register("SM", "AP")
 
 
 function Ammo:OnLoaded()
+	Ammo.BaseClass.OnLoaded(self)
+
 	self.Name		 = "Smoke"
 	self.SpawnIcon   = "acf/icons/shell_smoke.png"
-	self.Model		 = "models/munitions/round_100mm_shot.mdl"
+	self.Bodygroup   = 6 -- WP bodygroup index
+	self.MortarBodygroup = 1 -- Smoke mortar submodel
 	self.Description = "#acf.descs.ammo.sm"
 	self.Blacklist = {
 		AC = true,
@@ -80,7 +83,7 @@ function Ammo:BaseConvert(ToolData)
 	Data.LimitVel		= 100 --Most efficient penetration speed in m/s
 	Data.Ricochet		= 60 --Base ricochet angle
 	Data.DetonatorAngle	= 80
-	Data.CanFuze		= Data.Caliber * 10 > ACF.MinFuzeCaliber -- Can fuze on calibers > 20mm
+	Data.CanFuze		= Data.Caliber * 10 >= ACF.MinFuzeCaliber -- Can fuze on calibers > 20mm
 
 	self:UpdateRoundData(ToolData, Data, GUIData)
 

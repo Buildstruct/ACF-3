@@ -467,7 +467,11 @@ elseif SERVER then -- Serverside-only stuff
 					if PlateIndex == 1 then Axis(Wheel, Plate) -- Non steered wheels
 					else BallSocket(Baseplate, Wheel) HullSocket(Wheel, Plate) end -- Steered wheels
 				else
-					Plate:SetAngles(Angle(0, 90, 0)) -- Set angles to north
+					local Deviation = math.deg(math.acos(Plate:GetForward():Dot(Vector(0, 1, 0))))
+					if Deviation > 0.05 then
+						ACF.SendNotify(Player, false, "Drivetrain could not be created: Plate [" .. tostring(Plate) .. "] must be facing north. Deviation [" .. tostring(math.Round(Deviation, 2)) .. "].")
+						return
+					end
 					HullSocket(Wheel, Plate) -- Restrict rotation to baseplate or steer plate
 					if ArmType == 1 then ArmForwardLever(Wheel, Baseplate, ArmX, ArmY * Mirror, ArmZ)
 					elseif ArmType == 2 then ArmSidewaysLever(Wheel, Baseplate, ArmX, ArmY * Mirror, ArmZ)

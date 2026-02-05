@@ -96,6 +96,17 @@ do -- Generic Spawner/Linker operation creator
 		end
 	end
 
+	local function UnselectAllEntities(Tool)
+		local Player = Tool:GetOwner()
+		local Ents   = GetPlayerEnts(Player)
+
+		if not next(Ents) then return end
+
+		for Entity in pairs(Ents) do
+			UnselectEntity(Entity, Name, Tool)
+		end
+	end
+
 	local function SelectEntity(Entity, Name, Tool)
 		if not IsValid(Entity) then return false end
 
@@ -239,7 +250,12 @@ do -- Generic Spawner/Linker operation creator
 
 					-- The call to SelectEntity will switch the mode to the linker
 					return SelectEntity(Entity, Name, Tool)
-				end
+				end,
+				OnDeploy     = ACF.CreateGhostEntity,
+				OnHolster    = ACF.ReleaseGhostEntity,
+				OnEnterOp    = ACF.CreateGhostEntity,
+				OnExitOp     = ACF.ReleaseGhostEntity,
+				OnThink      = ACF.RenderGhostEntity,
 			})
 
 			ACF.RegisterToolInfo("acf_menu", "Spawner", Name, {
@@ -287,16 +303,8 @@ do -- Generic Spawner/Linker operation creator
 
 					return true
 				end,
-				OnHolster = function(Tool)
-					local Player = Tool:GetOwner()
-					local Ents   = GetPlayerEnts(Player)
-
-					if not next(Ents) then return end
-
-					for Entity in pairs(Ents) do
-						UnselectEntity(Entity, Name, Tool)
-					end
-				end,
+				OnHolster = UnselectAllEntities,
+				OnExitOp = UnselectAllEntities,
 			})
 
 			ACF.RegisterToolInfo("acf_menu", "Linker", Name, {
@@ -370,9 +378,11 @@ ACF.CreateMenuOperation("Baseplate", "baseplate", nil, {
 	Text = "Attempts to convert the target entity into a baseplate.",
 	Func = function(Tool, Trace)
 		if CLIENT then return end
-		local success, msg = ACF.ConvertEntityToBaseplate(Tool.SWEP:GetOwner(), Trace.Entity)
+		local success, msg = ACF.ConvertBaseplate(Tool.SWEP:GetOwner(), Trace.Entity)
 		if not success then
-			ACF.SendNotify(Tool:GetOwner(), err, "[ACF] Could not convert baseplate: " .. msg)
+			ACF.SendNotify(Tool:GetOwner(), false, "Could not convert baseplate: " .. msg)
+		else
+			ACF.SendNotify(Tool:GetOwner(), true, "Successfully converted entity to baseplate.")
 		end
 	end
 })

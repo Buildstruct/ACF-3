@@ -10,11 +10,12 @@ function Ammo:OnLoaded()
 
 	self.Name		 = "Armor Piercing High Explosive"
 	self.SpawnIcon   = "acf/icons/shell_aphe.png"
-	self.Model		 = "models/munitions/round_100mm_ap_shot.mdl"
+	self.Bodygroup   = 1 -- APHE bodygroup index
 	self.Description = "#acf.descs.ammo.aphe"
 	self.Blacklist = {
 		GL = true,
 		MG = true,
+		MO = true,
 		SL = true,
 		RAC = true,
 	}
@@ -70,7 +71,7 @@ function Ammo:BaseConvert(ToolData)
 	Data.ShovePower = 0.1
 	Data.LimitVel   = 700 --Most efficient penetration speed in m/s
 	Data.Ricochet   = 65 --Base ricochet angle
-	Data.CanFuze    = Data.Caliber * 10 > ACF.MinFuzeCaliber -- Can fuze on calibers > 20mm
+	Data.CanFuze    = Data.Caliber * 10 >= ACF.MinFuzeCaliber -- Can fuze on calibers > 20mm
 
 	GUIData.MinFillerVol = 0
 

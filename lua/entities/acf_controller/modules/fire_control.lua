@@ -79,42 +79,34 @@ do
 	-- Aim turrets
 	function ENT:ProcessTurrets(SelfTbl, HitPos)
 		local Turrets = SelfTbl.Turrets
-
+		if not IsValid(SelfTbl.Baseplate) then return end -- Needed for velocity
 		if SelfTbl.TurretLocked then return end
 
 		local Primary = self.Primary
 		local BreechReference = IsValid(Primary) and Primary.BreechReference
 		local ReloadAngle = self:GetReloadAngle()
 		local ShouldLevel = ReloadAngle ~= 0 and IsValid(Primary) and Primary.State ~= "Loaded"
-		local ShouldElevate = IsValid(self.TurretComputer)
 
 		-- Liddul... if you can hear me...
 		local TurretComputer = self.TurretComputer
-		local SuperElevation
+		local SuperElevation = nil
 		if TurretComputer  then
 			if TurretComputer.Computer == "DIR-BalComp" then SuperElevation = TurretComputer.Outputs.Elevation.Value
-			elseif TurretComputer.Computer == "IND-BalComp" then SuperElevation = TurretComputer.Outputs.Angle[1]
-			end
+			elseif TurretComputer.Computer == "IND-BalComp" then SuperElevation = TurretComputer.Outputs.Angle[1] end
 		end
 
 		if SuperElevation ~= nil and SuperElevation ~= SelfTbl.LastSuperElevation then
 			local TrueSuperElevation = SuperElevation - (SelfTbl.LasePitch or 0) -- Compute pitch offset to account for drop
-			local CounterDrop = (SelfTbl.LaseDist or 0) * math.tan(math.rad(-TrueSuperElevation)) -- Compute vector offset to account for drop
-			SelfTbl.Additive = Vector(0, 0, CounterDrop)
+			SelfTbl.Drop = (SelfTbl.LaseDist or 0) * math.tan(math.rad(-TrueSuperElevation)) -- Compute vector offset to account for drop
+			SelfTbl.TravelTime = SelfTbl.LaseDist ~= 0 and TurretComputer.Outputs["Flight Time"].Value or 0
 		end
-		SelfTbl.LastSuperElevation = SuperElevation
-
-		SelfTbl.Additive = SelfTbl.Additive or vector_origin
+		local AntiDrop = Vector(0, 0, SelfTbl.Drop or 0)
+		local AntiDrift = -self.Baseplate:GetVelocity() * (SelfTbl.TravelTime or 0)
 
 		for Turret, _ in pairs(Turrets) do
 			if IsValid(Turret) then
-				if Turret == BreechReference and ShouldLevel then
-					Turret:InputDirection(ReloadAngle)
-				elseif Turret == BreechReference and ShouldElevate then
-					Turret:InputDirection(HitPos + self.Additive)
-				else
-					Turret:InputDirection(HitPos + self.Additive)
-				end
+				if Turret == BreechReference and ShouldLevel then Turret:InputDirection(ReloadAngle)
+				else Turret:InputDirection(HitPos + AntiDrop + AntiDrift) end
 			end
 		end
 	end

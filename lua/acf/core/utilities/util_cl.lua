@@ -496,6 +496,7 @@ do -- Default turret menus
 			ACF.SetClientData("Turret", Data.ID)
 			ACF.SetClientData("Destiny", "Turrets")
 			ACF.SetClientData("PrimaryClass", "acf_turret")
+			ACF.SetClientData("SecondaryClass", "N/A")
 
 			local TurretData	= {
 				Ready		= false,
@@ -685,6 +686,17 @@ do -- Default turret menus
 				TurretData.RingHeight	= TurretClass.GetRingHeight({Type = Data.ID, Ratio = Data.Size.Ratio}, N)
 				TurretData.MaxMass		= MaxMass
 
+				-- :( this addon is a prison
+				if Menu.ComponentPreview then
+					local RingHeight = TurretData.RingHeight
+
+					if Data.ID == "Turret-H" then
+						Menu.ComponentPreview:SetModelScale(Vector(N, N, RingHeight))
+					else
+						Menu.ComponentPreview:SetModelScale(N / 20, true)
+					end
+				end
+
 				EstDist:SetMinMax(0, math.max(N * 2, 24))
 				MaxSpeed:SetValue(0)
 
@@ -744,6 +756,7 @@ do -- Default turret menus
 			ACF.SetClientData("Motor", Data.ID)
 			ACF.SetClientData("Destiny", "TurretMotors")
 			ACF.SetClientData("PrimaryClass", "acf_turret_motor")
+			ACF.SetClientData("SecondaryClass", "N/A")
 
 			Menu:AddLabel(language.GetPhrase("acf.menu.turrets.motors.speed"):format(Data.Speed))
 
@@ -868,6 +881,10 @@ do -- Default turret menus
 
 				MotorInfo:UpdateSim()
 
+				if Menu.ComponentPreview then
+					Menu.ComponentPreview:SetModelScale(N, true)
+				end
+
 				return N
 			end)
 			CompSize:SetValue(1)
@@ -943,12 +960,17 @@ do -- Default turret menus
 			ACF.SetClientData("Gyro", Data.ID)
 			ACF.SetClientData("Destiny", "TurretGyros")
 			ACF.SetClientData("PrimaryClass", "acf_turret_gyro")
+			ACF.SetClientData("SecondaryClass", "N/A")
 
 			local MassText = language.GetPhrase("acf.menu.turrets.mass_text")
 			Menu:AddLabel(MassText:format(Data.Mass))
 
 			if Data.IsDual then
 				Menu:AddLabel("#acf.menu.gyros.dual_desc")
+			end
+
+			if Menu.ComponentPreview then
+				Menu.ComponentPreview:SetModelScale(1, true)
 			end
 		end
 	end
@@ -958,9 +980,14 @@ do -- Default turret menus
 			ACF.SetClientData("Computer", Data.ID)
 			ACF.SetClientData("Destiny", "TurretComputers")
 			ACF.SetClientData("PrimaryClass", "acf_turret_computer")
+			ACF.SetClientData("SecondaryClass", "N/A")
 
 			local MassText = language.GetPhrase("acf.menu.turrets.mass_text")
 			Menu:AddLabel(MassText:format(Data.Mass))
+
+			if Menu.ComponentPreview then
+				Menu.ComponentPreview:SetModelScale(1, true)
+			end
 		end
 	end
 

@@ -13,7 +13,7 @@ local function CreateMenu(Menu)
 		FOV = 120,
 		Height = 120,
 	}
-	local Preview = Menu:AddModelPreview("models/hunter/plates/plate025x025.mdl", true)
+	local Preview = Menu:AddModelPreview("models/hunter/plates/plate025x025.mdl", true, "Primary")
 	Preview:UpdateSettings(PreviewSettings)
 
 	local Instructions = Menu:AddCollapsible("Instructions", true, "icon16/computer_add.png")
@@ -41,7 +41,7 @@ local function CreateMenu(Menu)
 	Controls:AddLabel("CTRL: Switch Cameras")
 	Controls:AddLabel("R: Unlock turret")
 	Controls:AddLabel("1/2/3: Select next ammo type (press again to force reload)")
-	Controls:AddLabel("Mouse3: Lase ballistic computer")
+	Controls:AddLabel("Mouse3: Lase ballistic computer (+ Ctrl to reset)")
 
 	local TroubleShooting = Menu:AddCollapsible("Troubleshooting", false, "icon16/computer_error.png")
 	TroubleShooting:AddLabel("If you're using a single gearbox, make sure all your forward gears come before your reverse gears in the readout.")

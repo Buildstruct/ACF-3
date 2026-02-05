@@ -370,7 +370,7 @@ do -- Spawn and Update functions -----------------------
 		return Entity
 	end
 
-	Entities.Register("acf_gearbox", ACF.MakeGearbox, "Gearbox", "Gears", "FinalDrive", "ShiftPoints", "Reverse", "MinRPM", "MaxRPM", "GearAmount", "GearboxScale", "GearboxLegacyRatio")
+	Entities.Register("acf_gearbox", ACF.MakeGearbox, "Gearbox", "Gears", "FinalDrive", "ShiftPoints", "Reverse", "MinRPM", "MaxRPM", "GearAmount", "GearboxScale", "GearboxLegacyRatio", "DualClutch")
 
 	ACF.RegisterLinkSource("acf_gearbox", "GearboxIn")
 	ACF.RegisterLinkSource("acf_gearbox", "GearboxOut")
@@ -758,8 +758,8 @@ end ----------------------------------------------------
 do -- Overlay Text -------------------------------------
 	function ENT:ACF_UpdateOverlayState(State)
 		local Final     = ACF.ConvertGearRatio(self.FinalDrive, self.GearboxLegacyRatio)
-		local Torque    = math.Round(self.MaxTorque * ACF.NmToFtLb)
-		local Output    = math.Round(self.TorqueOutput * ACF.NmToFtLb)
+		local Torque    = math.Round(self.MaxTorque * ACF.TorqueMult * ACF.NmToFtLb)
+		local Output    = math.Round(self.TorqueOutput * ACF.TorqueMult * ACF.NmToFtLb)
 
 		if not GearsText or GearsText == "" then
 			local Gears = self.Gears
@@ -789,8 +789,8 @@ do -- Overlay Text -------------------------------------
 		State:AddDivider()
 		State:AddNumber("Final Drive", Final)
 		State:AddKeyValue("Ratio", RatioFormat)
-		State:AddKeyValue("Torque Rating", ("%s Nm / %s ft-lb"):format(self.MaxTorque, Torque))
-		State:AddKeyValue("Torque Output", ("%s Nm / %s ft-lb"):format(math.floor(self.TorqueOutput), Output))
+		State:AddKeyValue("Torque Rating", ("%s Nm / %s ft-lb"):format(math.Round(self.MaxTorque * ACF.TorqueMult), Torque))
+		State:AddKeyValue("Torque Output", ("%s Nm / %s ft-lb"):format(math.floor(self.TorqueOutput * ACF.TorqueMult), Output))
 	end
 end ----------------------------------------------------
 
@@ -930,9 +930,10 @@ do -- Movement -----------------------------------------
 						end
 					end
 
-					Link.ReqTq = (InputRPM * Multiplier - RPM) * InputInertia * Clutch
-
-					TotalReqTq = TotalReqTq + abs(Link.ReqTq)
+					if abs(InputRPM * Multiplier) > abs(RPM) then -- removing this check causes the wheels to constantly invert their rotation
+						Link.ReqTq = (InputRPM * Multiplier - RPM) * InputInertia * Clutch
+						TotalReqTq = TotalReqTq + abs(Link.ReqTq)
+					end
 				end
 			end
 		end

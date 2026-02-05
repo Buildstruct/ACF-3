@@ -61,7 +61,9 @@ local function UpdateArmor(_, Entity, Data, BecauseOfDupe)
 	local Area      = Entity.ACF.Area
 	local Ductility = math.Clamp(Data.Ductility or 0, ACF.MinDuctility, ACF.MaxDuctility)
 
+	-- Physical clipping seems to take some time to apply after spawning, so avoid applying armor before that.
 	UpdateValues(Entity, Data, PhysObj, Area, Ductility)
+
 
 	duplicator.ClearEntityModifier(Entity, "ACF_Armor")
 	duplicator.StoreEntityModifier(Entity, "ACF_Armor", { Thickness = Data.Thickness, Ductility = Ductility })
@@ -313,9 +315,21 @@ else -- Serverside-only stuff
 		self.AimEntity = Ent
 	end
 
+	-- Handle physical clips by applying armor after the physical clip is applied
+	hook.Add("ProperClippingClipAdded", "ACF_ArmorTool_PostClip", function(ClippedEntity, _)
+		timer.Simple(engine.TickInterval(), function()
+			UpdateArmor(_, ClippedEntity, ClippedEntity.EntityMods.ACF_Armor)
+		end)
+	end)
+
+	-- Entry point for duplicator to apply armor settings
 	duplicator.RegisterEntityModifier("ACF_Armor", function(_, Entity, Data)
 		if Entity.IsPrimitive then return end
-		UpdateArmor(_, Entity, Data, true)
+
+		-- Only apply armor if the entity is not being clipped physically (happens in above hook)
+		local EntMods = Entity.EntityMods
+		local ClipMod = EntMods and EntMods.proper_clipping
+		if not ClipMod then	UpdateArmor(_, Entity, Data, true) end
 	end)
 
 	-- Specifically handling Primitives separately so that we can ensure that their stats are not impacted by a race condition
@@ -331,6 +345,7 @@ else -- Serverside-only stuff
 		end
 	end)
 
+	-- Backwards compatibility with deprecated system
 	duplicator.RegisterEntityModifier("acfsettings", function(_, Entity, Data)
 		if CLIENT then return end
 		if not ACF.Check(Entity, true) then return end
@@ -511,9 +526,9 @@ do -- Armor readout
 
 				local Contraption_ = Trace.Entity:GetContraption()
 				if Contraption_ then
-					return ACF.CostSystem.CalcCostsFromContraption(Contraption_)
+					return Contraption.CostSystem.CalcCostsFromContraption(Contraption_)
 				else
-					return ACF.CostSystem.CalcCostsFromEnts({Trace.Entity})
+					return Contraption.CostSystem.CalcCostsFromEnts({Trace.Entity})
 				end
 			end
 		},
@@ -528,7 +543,7 @@ do -- Armor readout
 			end,
 			GetCost = function(Tool, Trace)
 				local Ents = ents.FindInSphere(Trace.HitPos, Tool:GetClientNumber("sphere_radius"))
-				return ACF.CostSystem.CalcCostsFromEnts(Ents)
+				return Contraption.CostSystem.CalcCostsFromEnts(Ents)
 			end
 		}
 	}
@@ -556,10 +571,22 @@ do -- Armor readout
 		local Cost, Breakdown = Mode.GetCost(self, Trace)
 		if UseCostBreakdown then
 			local Player = self:GetOwner()
-			Messages.SendChat(Player, nil, "--- Contraption Cost Breakdown ---")
-			for Item, ItemCost in pairs(Breakdown) do
-				Messages.SendChat(Player, nil, "| " .. Item .. ": " .. math.Round(ItemCost, 2))
+
+			local NiceBreakdown = {}
+			for item, cost in pairs(Breakdown) do
+				table.insert(NiceBreakdown, {name = item, cost = cost})
 			end
+
+			table.sort(NiceBreakdown, function(a, b)
+				return a.cost > b.cost
+			end)
+
+			Messages.SendChat(Player, nil, "--- Contraption Cost Breakdown ---")
+
+			for _, Item in ipairs(NiceBreakdown) do
+				Messages.SendChat(Player, nil, "| " .. Item.name .. ": " .. math.Round(Item.cost, 2))
+			end
+
 			Messages.SendChat(Player, nil, "TOTAL COST: ", math.Round(Cost, 2))
 		else
 			local Power, Fuel, PhysNum, ParNum, ConNum, Name, OtherNum, Total, PhysTotal = Mode.GetResult(self, Trace)

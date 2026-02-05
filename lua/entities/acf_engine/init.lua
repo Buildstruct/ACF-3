@@ -557,8 +557,8 @@ function ENT:ACF_UpdateOverlayState(State)
 		State:AddWarning("Idle")
 	end
 	State:AddKeyValue("Type", self.Name)
-	State:AddKeyValue("Power", ("%s kW / %s hp"):format(Round(self.PeakPower), Round(self.PeakPower * ACF.KwToHp)))
-	State:AddKeyValue("Torque", ("%s Nm / %s ft-lb"):format(Round(self.PeakTorque), Round(self.PeakTorque * ACF.NmToFtLb)))
+	State:AddEnginePower("Power", self.PeakPower)
+	State:AddEngineTorque("Torque", self.PeakTorque)
 	State:AddKeyValue("Powerband", ("%s - %s RPM"):format(self.PeakMinRPM, self.PeakMaxRPM))
 	State:AddKeyValue("Redline", ("%s RPM"):format(self.LimitRPM))
 end
@@ -673,14 +673,6 @@ hook.Add("cfw.contraption.entityAdded", "ACF_Engine_ContraptionChecks", function
 		Contraption.HasEngines   = true
 		Contraption.TotalEngines = (Contraption.TotalEngines or 0) + 1
 	end
-
-	if Contraption.Engines then
-		for Engine in pairs(Contraption.Engines) do
-			if not IsValid(Engine) then continue end
-
-			ACF.CheckLegal(Engine)
-		end
-	end
 end)
 
 hook.Add("cfw.contraption.entityRemoved", "ACF_Engine_ContraptionChecks", function(Contraption, Ent)
@@ -691,14 +683,6 @@ hook.Add("cfw.contraption.entityRemoved", "ACF_Engine_ContraptionChecks", functi
 
 		Contraption.HasEngines   = next(Contraption.Engines) and true or nil
 		Contraption.TotalEngines = Contraption.HasEngines and 0 or table.Count(Contraption.Engines)
-	end
-
-	if Contraption.Engines then
-		for Engine in pairs(Contraption.Engines) do
-			if not IsValid(Engine) then continue end
-
-			ACF.CheckLegal(Engine)
-		end
 	end
 end)
 

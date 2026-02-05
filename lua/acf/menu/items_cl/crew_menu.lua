@@ -177,7 +177,7 @@ local function CreateMenu(Menu)
 
 	local Base			= Menu:AddCollapsible("#acf.menu.crew.crew_info", nil, "icon16/group_edit.png")
 	local CrewName		= Base:AddTitle()
-	local CrewPreview	= Base:AddModelPreview(nil, true)
+	local CrewPreview	= Base:AddModelPreview(nil, true, "Primary")
 	local ReplaceOthers	= Base:AddCheckBox("#acf.menu.crew.replace_others")
 	local ReplaceSelf	= Base:AddCheckBox("#acf.menu.crew.replace_self")
 	local UseAnimation	= Base:AddCheckBox("#acf.menu.crew.use_animation")
@@ -323,9 +323,9 @@ local function CreateMenu(Menu)
 		if CrewModel.Selected and CrewJob.Selected then Pose:SetText(language.GetPhrase("acf.menu.crew.model_efficiency"):format(CrewModel.Selected.BaseErgoScores[CrewJob.Selected.ID] or 1)) end
 
 		ACF.SetClientData("CrewModelID", Data.ID)
-		ACF.LoadSortedList(PlayerPose, CrewPoses.GetItemEntries(Data.ID), "Name")
 	end
 
+	ACF.LoadSortedList(PlayerPose, CrewPoses.GetEntries(), "Name")
 	ACF.LoadSortedList(CrewJob, CrewTypes.GetEntries(), "ID", "Icon")
 	ACF.LoadSortedList(CrewModel, CrewModels.GetEntries(), "ID")
 end

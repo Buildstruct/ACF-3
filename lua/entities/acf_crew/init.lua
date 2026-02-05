@@ -207,6 +207,7 @@ do -- Random timer stuff
 
 		-- Update oxygen levels and apply drowning if necessary
 		local MouthPos = self:LocalToWorld(self.CrewModel.MouthOffsetL) -- Probably well underwater at this point
+		-- debugoverlay.Cross(MouthPos, 4, 1, Red, true)
 		if bit.band(util.PointContents(MouthPos), CONTENTS_WATER) == CONTENTS_WATER then
 			self.Oxygen = self.Oxygen - DeltaTime * ACF.CrewOxygenLossRate
 		else
@@ -333,6 +334,7 @@ do -- Random timer stuff
 		if GForceIter % SampleRate ~= 0 then return end
 
 		local NewPos = self:LocalToWorld(SelfTbl.CrewModel.ScanOffsetL)
+		-- debugoverlay.Cross(NewPos, 4, 1, Red, true)
 		local GForce = ACF.UpdateGForceTracker(SelfTbl.GForceTracker, NewPos, SampleRate)
 
 		-- If specified, affect crew ergonomics based on G forces
@@ -534,14 +536,6 @@ do
 		Entity:CallOnRemove("GForceCalculation" .. Entity:EntIndex(), function()
 			hook.Remove("Tick", "GForceCalculation" .. Entity:EntIndex())
 		end)
-
-		-- Default material or fallback. This is overridden by AD2 due to entmods if the player applied one.
-		local Mat, _ = Material("sprops/sprops_grid_12x12")
-		local MatPath = ""
-		if not Mat:IsError() then MatPath = "sprops/sprops_grid_12x12"
-		else MatPath = "phoenix_storms/Indenttiles2" end
-		Entity:SetMaterial(MatPath)
-		Entity.MaterialPath = MatPath
 
 		-- Finish setting up the entity
 		HookRun("ACF_OnSpawnEntity", "acf_crew", Entity, Data, CrewModel, CrewType)

@@ -62,9 +62,9 @@ return function(State)
         if not IsFirstTimePredicted() then return end
         if not IsValid(State.MyController) then return end
 
-        if Button == KEY_1 then SelectAmmoType(1)
-        elseif Button == KEY_2 then SelectAmmoType(2)
-        elseif Button == KEY_3 then SelectAmmoType(3)
+        -- Autogenerate keys for ammo selection. KEY_1 = 2
+        for i = 1, 9 do
+            if Button == i + 1 then SelectAmmoType(i) end
         end
     end)
 

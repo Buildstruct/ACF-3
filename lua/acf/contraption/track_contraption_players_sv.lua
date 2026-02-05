@@ -14,6 +14,16 @@ local function ResetContraptionTimes(Contraption)
     end
 end
 
+ACF.ContraptionQueryTimes = ContraptionQueryTimes or {}
+local ContraptionQueryTimes = ACF.ContraptionQueryTimes
+
+function ResetTime(Entity)
+    if not IsValid(Entity) then return end
+
+    ContraptionQueryTimes[Entity] = nil
+    Entity:RemoveCallOnRemove("ACF_CleanUpPlayerContraptionCheck")
+end
+
 -- CFW hooks to initialize state and handle splitting
 hook.Add("cfw.contraption.created", "ACF_CFW_TrackPlayersInContraptions", function(Contraption)
     Contraption.ACF_TrackPlayers = {}
@@ -102,14 +112,6 @@ function ACF.PlayersInContraptionIterator(Contraption)
     return NextValid, Contraption.ACF_TrackPlayers, nil
 end
 
-local QueryTimes = {}
-
-function ResetTime(Entity)
-    if not IsValid(Entity) then return end
-
-    QueryTimes[Entity] = nil
-    Entity:RemoveCallOnRemove("ACF_CleanUpPlayerContraptionCheck")
-end
 --[[
 local Clock = ACF.Utilities.Clock
 
