@@ -1093,7 +1093,7 @@ if CLIENT then
 
     hook.Add("PlayerBindPress", "ACF_Scanner_BlockInputs", function(_, bind, pressed, code)
         if scanning.IsScannerActive() and (bind ~= "messagemode") then
-            if pressed and code == KEY_F then
+            if pressed and code == KEY_F and IsValid(SelectedEntity) then
                 SelectedFilter[SelectedEntity] = true
             end
             return true
