@@ -2,7 +2,6 @@ local ScrW = ScrW
 local ScrH = ScrH
 local SetDrawColor = surface.SetDrawColor
 local DrawRect = surface.DrawRect
-local DrawCircle = surface.DrawCircle
 local DrawText = draw.DrawText
 local DrawLine = surface.DrawLine
 
