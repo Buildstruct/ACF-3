@@ -792,6 +792,9 @@ if CLIENT then
 
     local ammoCrateLookup, fuelTankLookup = {}, {}
 
+    local SelectedEntity = nil
+    local SelectedFilter = {}
+
     -- Support for multiple clipping methods
     -- Taken from Starfall and slightly optimized
     local ent2framenumber = {}
@@ -935,6 +938,8 @@ if CLIENT then
             Derma_Message("Scanning has been blocked by the server: " .. (whyNot or "<no reason provided>"), "Scanning Blocked", "OK")
         return end
 
+        SelectedFilter = {}
+
         NetStart("UpdatePlayer")
         net_WriteEntity(target)
         net_SendToServer()
@@ -949,6 +954,8 @@ if CLIENT then
 
     function scanning.EndScanning()
         scanningPlayer = nil
+
+        SelectedFilter = {}
 
         NetStart("EndScanning")
         net_SendToServer()
@@ -1063,26 +1070,13 @@ if CLIENT then
         }
     end)
 
-    hook.Add("PlayerBindPress", "ACF_Scanner_BlockInputs", function(_, bind, _, _)
+    hook.Add("PlayerBindPress", "ACF_Scanner_BlockInputs", function(_, bind, pressed, code)
         if scanning.IsScannerActive() and (bind ~= "messagemode") then
-            return true
-        end
-    end)
-
-    local screenClickerEnabledBecauseOfUs = false
-    hook.Add("PlayerButtonDown", "ACF_Scanner_BlockInputs", function(_, btn)
-        if scanning.IsScannerActive() then
-            if btn == KEY_C then
-                screenClickerEnabledBecauseOfUs = true
-                gui.EnableScreenClicker(true)
+            if pressed and code == KEY_F then
+                print(SelectedEntity)
+                SelectedFilter[SelectedEntity] = true
             end
             return true
-        end
-    end)
-    hook.Add("PlayerButtonUp", "ACF_Scanner_BlockInputs", function(_, btn)
-        if btn == KEY_C and screenClickerEnabledBecauseOfUs then
-            gui.EnableScreenClicker(false)
-            screenClickerEnabledBecauseOfUs = false
         end
     end)
 
@@ -1317,7 +1311,7 @@ if CLIENT then
 
         if scanning.IsScannerActive() then
             for _, ent in ipairs(scanningEnts) do
-                if IsValid(ent) then
+                if IsValid(ent) and not SelectedFilter[ent] then
                     local class = ent:GetClass()
                     local scanDef = scannerTypes[class]
 
@@ -1441,6 +1435,8 @@ if CLIENT then
         surface.SetDrawColor(scanDef.colorMarkerBorder)
         surface.DrawOutlinedRect(pX - md2W, pY - md2H, markerSizeW, markerSizeH, 2)
 
+        if ent == SelectedEntity then surface.DrawOutlinedRect(pX - md2W * 1.2, pY - md2H * 1.2, markerSizeW * 1.2, markerSizeH * 1.2, 2) end
+
         surface.SetDrawColor(0, 0, 0, 255)
         surface.DrawOutlinedRect((pX - md2W) - 1, (pY - md2H) - 1, markerSizeW + 2, markerSizeH + 2)
         surface.DrawOutlinedRect((pX - md2W) + 2, (pY - md2H) + 2, markerSizeW - 4, markerSizeH - 4)
@@ -1502,18 +1498,26 @@ if CLIENT then
         end
     end
 
+    local CenterX, CenterY = ScrW() / 2, ScrH() / 2
     hook.Add("HUDPaint", "ACF_Scanner_Render2D", function()
+        local ClosestDistance = 999999
+        local ClosestEntity = nil
         if scanning.IsScannerActive() then
             local pXY = (scanningPlayer:GetPos() + Vector(0, 0, scanningPlayer:InVehicle() and 0 or 30)):ToScreen()
             DrawMarker(playerC, pXY.x, pXY.y)
             for _, ent in ipairs(scanningEnts) do
-                if IsValid(ent) then
+                if IsValid(ent) and not SelectedFilter[ent] then
                     local class = ent:GetClass()
                     local scanDef = scannerTypes[class]
                     if scanDef ~= nil then
                         if scanDef.drawMarker then
                             local pXY = ent:GetPos():ToScreen()
                             local pX, pY = pXY.x, pXY.y
+                            local Distance = Vector(pX - CenterX, pY - CenterY, 0):Length()
+                            if Distance < ClosestDistance then
+                                ClosestDistance = Distance
+                                ClosestEntity = ent
+                            end
                             DrawMarker(scanDef, pX, pY, ent)
                         end
                         if scanDef.drawOverlay then
@@ -1525,6 +1529,8 @@ if CLIENT then
                     end
                 end
             end
+
+            if IsValid(ClosestEntity) then SelectedEntity = ClosestEntity end
 
             for _, ent in ipairs(baseplates) do
                 if IsValid(ent) and ent:GetClass() ~= "acf_baseplate" then
