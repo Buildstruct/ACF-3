@@ -759,6 +759,26 @@ if CLIENT then
         end
     end)
 
+    RegisterBasePanelDerivative("Occlusion", function(PANEL, BASE)
+        function PANEL:Init()
+            self.Buttons = {}
+            self.Tabs = {}
+            self:SetSize(256 - 8, 48)
+        end
+
+        function PANEL:PerformLayout(w, _)
+            local scrW = ScrW()
+
+            self:SetPos(scrW - w - 12, 8 + 192 + 8 + 48 + 8)
+        end
+
+        function PANEL:Paint(w, h)
+            BASE.Paint(self, w, h)
+
+            draw_SimpleTextRGBA("Press [F] to hide aimed at entity", "ACF_Scanner_Font3", w / 2, h / 2, 255, 255, 255, 255, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        end
+    end)
+
     RegisterBaseFrameDerivative("Legend", function(PANEL, BASE)
         function PANEL:Init()
             local internal = self:Add("DPanel")
@@ -923,6 +943,7 @@ if CLIENT then
 
 
         local speedvis = scanning.AddPanel("ACF_Scanner_ScrollSpeed")
+        scanning.AddPanel("ACF_Scanner_Occlusion")
 
         function speedvis:GetScrollSpeed()
             return scanning.GetMouseZoom()
@@ -1073,7 +1094,6 @@ if CLIENT then
     hook.Add("PlayerBindPress", "ACF_Scanner_BlockInputs", function(_, bind, pressed, code)
         if scanning.IsScannerActive() and (bind ~= "messagemode") then
             if pressed and code == KEY_F then
-                print(SelectedEntity)
                 SelectedFilter[SelectedEntity] = true
             end
             return true
