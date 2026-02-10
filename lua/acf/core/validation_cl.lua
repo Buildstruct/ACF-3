@@ -22,16 +22,16 @@ local ErroredEntities = {}
 net.Receive("ACF_Error_Entity", function(_, _)
     local Entity = net.ReadEntity()
     if not IsValid(Entity) then return end
-    ErroredEntities[CurTime()] = Entity
+    ErroredEntities[Entity] = CurTime()
 end)
 
 -- Apply a holo around disabled entities, for 5 seconds
 hook.Add("PreDrawHalos", "ACF_Error_Entity_Display", function()
     local CurTime = CurTime()
-    for Time, Entity in pairs(ErroredEntities) do
+    for Entity, Time in pairs(ErroredEntities) do
         local Progress = (CurTime - Time) / 5
         if CurTime - Time > 5 then
-            ErroredEntities[Time] = nil
+            ErroredEntities[Entity] = nil
         elseif IsValid(Entity) then
             halo.Add( {Entity}, Color(255, 0, 0, (1-Progress) * 255), 5, 5, 2, true, true )
         end

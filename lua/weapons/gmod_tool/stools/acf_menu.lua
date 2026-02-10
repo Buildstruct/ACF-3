@@ -14,7 +14,6 @@ if CLIENT then
 
 		if not IsValid(Entity) then return end
 		if not Entity.DrawOverlay then return end
-
 		if Entity.CanDrawOverlay and not Entity:CanDrawOverlay() then return end
 
 		if Distance <= 65536 then
@@ -26,6 +25,37 @@ if CLIENT then
 			cam.End3D()
 		end
 	end
+
+	local HoldOverlay = {} -- Entities to keep overlay on for
+	function TOOL:Think()
+		local isFirstTimePredicted = IsFirstTimePredicted()
+		if not isFirstTimePredicted then return end
+
+		local Player = self:GetOwner()
+		if Player:KeyPressed(IN_WALK) then
+			local Trace = Player:GetEyeTrace()
+			local Entity = Trace.Entity
+			if not IsValid(Entity) then return end
+			if not Entity.DrawOverlay then return end
+			if HoldOverlay[Entity] then HoldOverlay[Entity] = nil else HoldOverlay[Entity] = true end
+
+			local Weapon = self.Weapon
+			Weapon:DoShootEffect( Trace.HitPos, Trace.HitNormal, Trace.Entity, Trace.PhysicsBone, isFirstTimePredicted )
+		end
+	end
+
+	-- Respects occlusion
+	hook.Add("PreDrawOpaqueRenderables", "ACF_Menu_DrawOverlay", function()
+		local Player = LocalPlayer()
+		local Trace = Player:GetEyeTrace()
+		for Entity in pairs(HoldOverlay) do
+			if not IsValid(Entity) then continue end
+			if not Entity.DrawOverlay then continue end
+			if Entity.CanDrawOverlay and not Entity:CanDrawOverlay() then continue end
+
+			Entity:DrawOverlay(Trace)
+		end
+	end)
 
 	TOOL.BuildCPanel = ACF.CreateSpawnMenu
 
