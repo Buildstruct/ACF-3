@@ -733,6 +733,38 @@ do -- Ghost entity handling
 		Tool:ReleaseGhostEntity()
 	end
 
+	local HoldOverlay = {} -- Entities to keep overlay on for
+
+	-- Respects occlusion
+	hook.Add("PreDrawOpaqueRenderables", "ACF_Menu_DrawOverlay", function()
+		local Player = LocalPlayer()
+		local Trace = Player:GetEyeTrace()
+		for Entity in pairs(HoldOverlay) do
+			if not IsValid(Entity) then continue end
+			if not Entity.DrawOverlay then continue end
+			if Entity.CanDrawOverlay and not Entity:CanDrawOverlay() then continue end
+
+			Entity:DrawOverlay(Trace)
+		end
+	end)
+
+	function ACF.RunHoldOverlay(Tool)
+		local isFirstTimePredicted = IsFirstTimePredicted()
+		if not isFirstTimePredicted then return end
+
+		local Player = Tool:GetOwner()
+		if Player:KeyPressed(IN_WALK) then
+			local Trace = Player:GetEyeTrace()
+			local Entity = Trace.Entity
+			if not IsValid(Entity) then return end
+			if not Entity.DrawOverlay then return end
+			if HoldOverlay[Entity] then HoldOverlay[Entity] = nil else HoldOverlay[Entity] = true end
+
+			local Weapon = Tool.Weapon
+			Weapon:DoShootEffect( Trace.HitPos, Trace.HitNormal, Trace.Entity, Trace.PhysicsBone, isFirstTimePredicted )
+		end
+	end
+
 	hook.Add("ACF_OnUpdateClientData", "ACF_HandleGhostEntities", function(_, Key)
 		if Key ~= "Primary" and Key ~= "Secondary" then return end
 
