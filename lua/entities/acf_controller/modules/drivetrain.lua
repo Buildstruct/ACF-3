@@ -97,24 +97,23 @@ do
 		end
 	end
 
-	-- Sets an input for an array of entities, if they exist and the value has changed
-	local function SetAll(SelfTbl, Tbl, Name, Value)
-		for Entity in pairs(Tbl) do TriggerSafe(SelfTbl, Entity, Name, Value) end
+	local function SetAll(SelfTbl, TblName, Name, Value)
+		for Entity in pairs(SelfTbl[TblName]) do TriggerSafe(SelfTbl, Entity, Name, Value) end
 	end
 
-	--- All wheel variant
-	local function SetAllBrakes(SelfTbl, Strength)
-		SetAll(SelfTbl, SelfTbl.GearboxEnds, "Brake", Strength)
+	-- Sets a property on all end effectors
+	local function SetBoth(SelfTbl, Name, Value)
+		for Gearbox in pairs(SelfTbl.GearboxEnds) do TriggerSafe(SelfTbl, Gearbox, Name, Value) end
 	end
 
-	--- All wheel variant
-	local function SetAllClutches(SelfTbl, Strength)
-		SetAll(SelfTbl, SelfTbl.GearboxEnds, "Clutch", Strength)
+	-- Sets a optionally signed property on left end effectors
+	local function SetLeft(SelfTbl, Name, Value, Sided)
+		for Gearbox, Side in pairs(SelfTbl.LeftGearboxes) do TriggerSafe(SelfTbl, Gearbox, (Sided and Side .. " " or "") .. Name, Value) end
 	end
 
-	--- All wheel variant
-	local function SetAllTransfers(SelfTbl, Gear)
-		SetAll(SelfTbl, SelfTbl.GearboxEnds, "Gear", Gear)
+	-- Sets a optionally signed property on right end effectors
+	local function SetRight(SelfTbl, Name, Value, Sided)
+		for Gearbox, Side in pairs(SelfTbl.RightGearboxes) do TriggerSafe(SelfTbl, Gearbox, (Sided and Side .. " " or "") .. Name, Value) end
 	end
 
 	--- Steer a plate left or right
@@ -192,7 +191,6 @@ do
 	--- Handles driving, gearing, clutches, latches and brakes
 	function ENT:ProcessDrivetrain(SelfTbl)
 		-- Log speed even if drivetrain is invalid
-		-- TODO: should this be map or player scale?
 		if not IsValid(SelfTbl.Baseplate) then return end
 
 		local Unit = self:GetSpeedUnit()
@@ -218,10 +216,7 @@ do
 		local ShouldSteer = self.CanSteer or self:GetForceAWD()
 
 		-- Throttle the engines
-		local Engines = SelfTbl.Engines
-		for Engine in pairs(Engines) do
-			TriggerSafe(SelfTbl, Engine, "Throttle", IsMoving and 100 or self:GetThrottleIdle() or 0)
-		end
+		SetAll(SelfTbl, "Engines", "Throttle", IsMoving and 100 or self:GetThrottleIdle() or 0)
 
 		local MinSpeed, MaxSpeed = self:GetSpeedLow(), self:GetSpeedTop()
 		local MinBrake, MaxBrake = self:GetBrakeStrength(), self:GetBrakeStrengthTop()
@@ -233,36 +228,46 @@ do
 		if not ShouldSteer then
 			-- Tank steering
 			if IsBraking or (self:GetBrakeEngagement() == 1 and not IsMoving) then -- Braking
-				SetBrakes(SelfTbl, BrakeStrength, BrakeStrength) SetClutches(SelfTbl, CLUTCH_BLOCK, CLUTCH_BLOCK) SetLatches(SelfTbl, true)
+				SetLeft(SelfTbl, "Brake", BrakeStrength, true) SetRight(SelfTbl, "Brake", BrakeStrength, true)
+				SetLeft(SelfTbl, "Clutch", CLUTCH_BLOCK, true) SetRight(SelfTbl, "Clutch", CLUTCH_BLOCK, true)
+				SetLatches(SelfTbl, true)
 				return
 			end
 
 			SetLatches(SelfTbl, false)
 			if IsNeutral and ShouldNeutral then -- Neutral steering, gears follow A/D
-				SetBrakes(SelfTbl, 0, 0) SetClutches(SelfTbl, CLUTCH_FLOW, CLUTCH_FLOW)
-				SetTransfers(SelfTbl, A and 2 or 1, D and 2 or 1)
+				SetLeft(SelfTbl, "Brake", 0, true) SetRight(SelfTbl, "Brake", 0, true)
+				SetLeft(SelfTbl, "Clutch", CLUTCH_FLOW, true) SetRight(SelfTbl, "Clutch", CLUTCH_FLOW, true)
+				SetLeft(SelfTbl, "Gear", A and 2 or 1) SetRight(SelfTbl, "Gear", D and 2 or 1)
 			else -- Normal driving, gears follow W/S
 				local TransferGear = (W and 1) or (S and 2) or (A and 1) or (D and 1) or 0
-				if ShouldNeutral then SetTransfers(SelfTbl, TransferGear, TransferGear) end
+				if ShouldNeutral then SetBoth(SelfTbl, "Gear", TransferGear) end
 
 				if A and not D then -- Turn left
-					SetBrakes(SelfTbl, BrakeStrength, 0) SetClutches(SelfTbl, CLUTCH_BLOCK, CLUTCH_FLOW)
+					SetLeft(SelfTbl, "Brake", BrakeStrength, true) SetRight(SelfTbl, "Brake", 0, true)
+					SetLeft(SelfTbl, "Clutch", CLUTCH_BLOCK, true) SetRight(SelfTbl, "Clutch", CLUTCH_FLOW, true)
 				elseif D and not A then -- Turn right
-					SetBrakes(SelfTbl, 0, BrakeStrength) SetClutches(SelfTbl, CLUTCH_FLOW, CLUTCH_BLOCK)
+					SetLeft(SelfTbl, "Brake", 0, true) SetRight(SelfTbl, "Brake", BrakeStrength, true)
+					SetLeft(SelfTbl, "Clutch", CLUTCH_FLOW, true) SetRight(SelfTbl, "Clutch", CLUTCH_BLOCK, true)
 				else -- No turn
-					SetBrakes(SelfTbl, 0, 0) SetClutches(SelfTbl, CLUTCH_FLOW, CLUTCH_FLOW)
+					SetLeft(SelfTbl, "Brake", 0, true) SetRight(SelfTbl, "Brake", 0, true)
+					SetLeft(SelfTbl, "Clutch", CLUTCH_FLOW, true) SetRight(SelfTbl, "Clutch", CLUTCH_FLOW, true)
 				end
 			end
 		else
 			-- Car steering
 			if IsBraking or (self:GetBrakeEngagement() == 1 and not IsMoving) then -- Braking
-				SetAllBrakes(SelfTbl, BrakeStrength) SetAllClutches(SelfTbl, CLUTCH_BLOCK) SetLatches(SelfTbl, true)
+				SetBoth(SelfTbl, "LeftBrake", BrakeStrength) SetBoth(SelfTbl, "RightBrake", BrakeStrength)
+				SetBoth(SelfTbl, "LeftClutch", CLUTCH_BLOCK) SetBoth(SelfTbl, "RightClutch", CLUTCH_BLOCK)
+				SetLatches(SelfTbl, true)
 				return
 			end
+			SetBoth(SelfTbl, "LeftBrake", 0) SetBoth(SelfTbl, "RightBrake", 0)
+			SetBoth(SelfTbl, "LeftClutch", CLUTCH_FLOW) SetBoth(SelfTbl, "RightClutch", CLUTCH_FLOW)
+			SetLatches(SelfTbl, false) -- Revert braking if not braking
 
-			SetAllBrakes(SelfTbl, 0) SetAllClutches(SelfTbl, CLUTCH_FLOW) SetLatches(SelfTbl, false) -- Revert braking if not braking
 			local TransferGear = (W and 1) or (S and 2) or (A and 1) or (D and 1) or 0
-			SetAllTransfers(SelfTbl, TransferGear)
+			SetBoth(SelfTbl, "Gear", TransferGear)
 
 			-- Setang steering stuff
 			local TURN_ANGLE = A and BrakeStrength or D and -BrakeStrength or 0
