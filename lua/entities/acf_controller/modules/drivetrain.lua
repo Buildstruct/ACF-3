@@ -58,13 +58,13 @@ do
 	--- Sets the brakes of the left/right transfers
 	local function SetBrakes(SelfTbl, L, R)
 		if IsValid(SelfTbl.GearboxLeft) then SelfTbl.GearboxLeft:TriggerInput(SelfTbl.GearboxLeftDir .. " Brake", L) end
-		if IsValid(SelfTbl.GearboxLeft) then  SelfTbl.GearboxRight:TriggerInput(SelfTbl.GearboxRightDir .. " Brake", R) end
+		if IsValid(SelfTbl.GearboxRight) then SelfTbl.GearboxRight:TriggerInput(SelfTbl.GearboxRightDir .. " Brake", R) end
 	end
 
 	--- Sets the clutches of the left/right transfers
 	local function SetClutches(SelfTbl, L, R)
 		if IsValid(SelfTbl.GearboxLeft) then SelfTbl.GearboxLeft:TriggerInput(SelfTbl.GearboxLeftDir .. " Clutch", L) end
-		if IsValid(SelfTbl.GearboxLeft) then SelfTbl.GearboxRight:TriggerInput(SelfTbl.GearboxRightDir .. " Clutch", R) end
+		if IsValid(SelfTbl.GearboxRight) then SelfTbl.GearboxRight:TriggerInput(SelfTbl.GearboxRightDir .. " Clutch", R) end
 	end
 
 	--- Sets the gears of the left/right transfers
@@ -87,25 +87,34 @@ do
 		end
 	end
 
+	-- Sets an input for an entity, if it exists and the value has changed since last time.
+	local function TriggerSafe(SelfTbl, Entity, Name, Value)
+		if not IsValid(Entity) then return end
+		if not SelfTbl.LastInputs[Entity] then SelfTbl.LastInputs[Entity] = {} end
+		if SelfTbl.LastInputs[Entity][Name] ~= Value then
+			SelfTbl.LastInputs[Entity][Name] = Value
+			Entity:TriggerInput(Name, Value)
+		end
+	end
+
+	-- Sets an input for an array of entities, if they exist and the value has changed
+	local function SetAll(SelfTbl, Tbl, Name, Value)
+		for Entity in pairs(Tbl) do TriggerSafe(SelfTbl, Entity, Name, Value) end
+	end
+
 	--- All wheel variant
 	local function SetAllBrakes(SelfTbl, Strength)
-		for Gearbox in pairs(SelfTbl.GearboxEnds) do
-			if IsValid(Gearbox) then Gearbox:TriggerInput("Brake", Strength) end
-		end
+		SetAll(SelfTbl, SelfTbl.GearboxEnds, "Brake", Strength)
 	end
 
 	--- All wheel variant
 	local function SetAllClutches(SelfTbl, Strength)
-		for Gearbox in pairs(SelfTbl.GearboxEnds) do
-			if IsValid(Gearbox) then Gearbox:TriggerInput("Clutch", Strength) end
-		end
+		SetAll(SelfTbl, SelfTbl.GearboxEnds, "Clutch", Strength)
 	end
 
 	--- All wheel variant
 	local function SetAllTransfers(SelfTbl, Gear)
-		for Gearbox in pairs(SelfTbl.GearboxEnds) do
-			if IsValid(Gearbox) then Gearbox:TriggerInput("Gear", Gear) end
-		end
+		SetAll(SelfTbl, SelfTbl.GearboxEnds, "Gear", Gear)
 	end
 
 	--- Steer a plate left or right
@@ -144,17 +153,16 @@ do
 		local LeftWheels, RightWheels = {}, {}
 		local avg, count = 0, 0
 		for Wheel in pairs(self.Wheels) do
-			avg = avg + Wheel:GetPos().x
-			count = count + 1
+			avg, count = avg + Wheel:GetPos().x, count + 1
 		end
 		avg = avg / count
+
 		for Wheel in pairs(self.Wheels) do
 			if Wheel:GetPos().x < avg then LeftWheels[Wheel] = true else RightWheels[Wheel] = true end
 		end
 		self.LeftWheels, self.RightWheels = LeftWheels, RightWheels
 
 		-- Determine the Left/Right gearboxes from the Left/Right wheels
-		-- Hypothetically there's a drivetrain with more than one gearbox per side but that's out of scope for newcomers.
 		local GetWheels = ACF.GetAllLinkSources("acf_gearbox").Wheels
 		local LeftGearboxes, RightGearboxes = {}, {} -- LUTs from gearbox to output direction
 		for Gearbox in pairs(self.GearboxEnds) do
@@ -168,7 +176,17 @@ do
 		self.GearboxLeft, self.GearboxLeftDir = next(LeftGearboxes)
 		self.GearboxRight, self.GearboxRightDir = next(RightGearboxes)
 
+		self.CanSteer = #self.SteerPlatesSorted > 0 -- Steer if there are any steer plates
+
+		self.CanNeutral = not self.CanSteer -- Can't neutral steer if you can steer
+
+		-- Can't neutral steer if a gearbox is connected to both sides *ignoring double differentials
+		for Gearbox in pairs(self.LeftGearboxes) do if self.RightGearboxes[Gearbox] then self.CanNeutral = false break end end
+		for Gearbox in pairs(self.RightGearboxes) do if self.LeftGearboxes[Gearbox] then self.CanNeutral = false break end end
+
 		for Wheel in pairs(self.Wheels) do self.SteerAngles[Wheel] = 0 end
+
+		self.LastInputs = {}
 	end
 
 	--- Handles driving, gearing, clutches, latches and brakes
@@ -196,15 +214,13 @@ do
 
 		-- Only two transfer setups can reasonably be expected to neutral steer
 		local IsNeutral = not IsLateral and IsTurning
-		local CanNeutral = SelfTbl.GearboxEndCount == 2
-		local ShouldAWD = SelfTbl.GearboxEndCount > 2 or self:GetForceAWD()
+		local ShouldNeutral = self.CanNeutral and not self:GetForceAWD()
+		local ShouldSteer = self.CanSteer or self:GetForceAWD()
 
 		-- Throttle the engines
 		local Engines = SelfTbl.Engines
 		for Engine in pairs(Engines) do
-			if IsValid(Engine) then
-				Engine:TriggerInput("Throttle", IsMoving and 100 or self:GetThrottleIdle() or 0)
-			end
+			TriggerSafe(SelfTbl, Engine, "Throttle", IsMoving and 100 or self:GetThrottleIdle() or 0)
 		end
 
 		local MinSpeed, MaxSpeed = self:GetSpeedLow(), self:GetSpeedTop()
@@ -214,7 +230,7 @@ do
 			BrakeStrength = math.Remap(Speed, MinSpeed, MaxSpeed, MinBrake, MaxBrake)
 		end
 
-		if not ShouldAWD then
+		if not ShouldSteer then
 			-- Tank steering
 			if IsBraking or (self:GetBrakeEngagement() == 1 and not IsMoving) then -- Braking
 				SetBrakes(SelfTbl, BrakeStrength, BrakeStrength) SetClutches(SelfTbl, CLUTCH_BLOCK, CLUTCH_BLOCK) SetLatches(SelfTbl, true)
@@ -222,12 +238,12 @@ do
 			end
 
 			SetLatches(SelfTbl, false)
-			if IsNeutral and CanNeutral then -- Neutral steering, gears follow A/D
+			if IsNeutral and ShouldNeutral then -- Neutral steering, gears follow A/D
 				SetBrakes(SelfTbl, 0, 0) SetClutches(SelfTbl, CLUTCH_FLOW, CLUTCH_FLOW)
 				SetTransfers(SelfTbl, A and 2 or 1, D and 2 or 1)
 			else -- Normal driving, gears follow W/S
 				local TransferGear = (W and 1) or (S and 2) or (A and 1) or (D and 1) or 0
-				if CanNeutral then SetTransfers(SelfTbl, TransferGear, TransferGear) end
+				if ShouldNeutral then SetTransfers(SelfTbl, TransferGear, TransferGear) end
 
 				if A and not D then -- Turn left
 					SetBrakes(SelfTbl, BrakeStrength, 0) SetClutches(SelfTbl, CLUTCH_BLOCK, CLUTCH_FLOW)
@@ -255,7 +271,6 @@ do
 			for Index, SteerPlate in ipairs(SelfTbl.SteerPlatesSorted) do
 				if IsValid(SteerPlate) then
 					SetSteerPlate(SelfTbl, SelfTbl.Baseplate, SteerPlate, TURN_ANGLE * SteerPercents[Index], TURN_RATE)
-
 					local PhysicsObject = SelfTbl.SteerPhysicsObjects[SteerPlate] or SteerPlate:GetPhysicsObject()
 					SelfTbl.SteerPhysicsObjects[SteerPlate] = PhysicsObject
 					PhysicsObject:EnableMotion(false)
@@ -287,9 +302,9 @@ do
 		elseif RPM < MaxRPM then Gear = Gear - 1 end
 
 		-- Clean this up later
-		local CanNeutral = SelfTbl.GearboxEndCount == 2
+		local ShouldNeutral = self.CanNeutral and not self:GetForceAWD()
 		local Lower, Upper = 1, SelfTbl.ForwardGearCount
-		if CanNeutral then
+		if ShouldNeutral then
 			Lower = 1
 			Upper = SelfTbl.ForwardGearCount
 		elseif S then
