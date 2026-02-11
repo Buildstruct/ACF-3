@@ -55,24 +55,6 @@ do
 		if d1 < d2 then return "Left" else return "Right" end
 	end
 
-	--- Sets the brakes of the left/right transfers
-	local function SetBrakes(SelfTbl, L, R)
-		if IsValid(SelfTbl.GearboxLeft) then SelfTbl.GearboxLeft:TriggerInput(SelfTbl.GearboxLeftDir .. " Brake", L) end
-		if IsValid(SelfTbl.GearboxRight) then SelfTbl.GearboxRight:TriggerInput(SelfTbl.GearboxRightDir .. " Brake", R) end
-	end
-
-	--- Sets the clutches of the left/right transfers
-	local function SetClutches(SelfTbl, L, R)
-		if IsValid(SelfTbl.GearboxLeft) then SelfTbl.GearboxLeft:TriggerInput(SelfTbl.GearboxLeftDir .. " Clutch", L) end
-		if IsValid(SelfTbl.GearboxRight) then SelfTbl.GearboxRight:TriggerInput(SelfTbl.GearboxRightDir .. " Clutch", R) end
-	end
-
-	--- Sets the gears of the left/right transfers
-	local function SetTransfers(SelfTbl, L, R)
-		if IsValid(SelfTbl.GearboxLeft) then SelfTbl.GearboxLeft:TriggerInput("Gear", L) end
-		if IsValid(SelfTbl.GearboxRight) then SelfTbl.GearboxRight:TriggerInput("Gear", R) end
-	end
-
 	--- Creates/Removes weld constraints from the Left/Right Wheels to baseplate or between them.
 	local function SetLatches(SelfTbl, Engage)
 		if SelfTbl:GetDisableWeldBrake() == 1 then return end
@@ -212,8 +194,8 @@ do
 
 		-- Only two transfer setups can reasonably be expected to neutral steer
 		local IsNeutral = not IsLateral and IsTurning
-		local ShouldNeutral = self.CanNeutral and not self:GetForceAWD()
-		local ShouldSteer = self.CanSteer or self:GetForceAWD()
+		local ShouldNeutral = self.CanNeutral and not self:GetForceSteering()
+		local ShouldSteer = self.CanSteer or self:GetForceSteering()
 
 		-- Throttle the engines
 		SetAll(SelfTbl, "Engines", "Throttle", IsMoving and 100 or self:GetThrottleIdle() or 0)
