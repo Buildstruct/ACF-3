@@ -129,6 +129,7 @@ do
 		table.sort(ForwardGears, function(A, B) return MainGearbox.Gears[A] < MainGearbox.Gears[B] end)
 		table.sort(ReverseGears, function(A, B) return MainGearbox.Gears[A] > MainGearbox.Gears[B] end)
 		self.ForwardGears, self.ReverseGears = ForwardGears, ReverseGears
+		if MainGearbox.Automatic then self.ForwardGears = {1} self.ReverseGears = {2} end
 
 		self.FuelCapacity = 0
 		for Fuel in pairs(self.Fuels) do self.FuelCapacity = self.FuelCapacity + Fuel.Capacity end
@@ -168,9 +169,9 @@ do
 		for Gearbox in pairs(self.LeftGearboxes) do if self.RightGearboxes[Gearbox] then self.CanNeutral = false break end end
 		for Gearbox in pairs(self.RightGearboxes) do if self.LeftGearboxes[Gearbox] then self.CanNeutral = false break end end
 
-		if self.Gearbox.DoubleDiff then self.CanNeutral = true end -- Special exception for double differentials
-
 		for Wheel in pairs(self.Wheels) do self.SteerAngles[Wheel] = 0 end
+
+		if self.Gearbox.DoubleDiff then self.CanNeutral = true end
 
 		self.LastInputs = {}
 		self.LastGear = 0
@@ -201,8 +202,8 @@ do
 
 		-- Only two transfer setups can reasonably be expected to neutral steer
 		local IsNeutral = not IsLateral and IsTurning
-		local ShouldNeutral = self.CanNeutral and not self:GetForceSteering()
-		local ShouldSteer = self.CanSteer or self:GetForceSteering()
+		local ShouldNeutral = self.CanNeutral and not self:GetForceCarSteering()
+		local ShouldSteer = self.CanSteer or self:GetForceCarSteering()
 
 		-- Throttle the engines
 		SetAll(SelfTbl, "Engines", "Throttle", IsMoving and 100 or self:GetThrottleIdle() or 0)
@@ -214,21 +215,22 @@ do
 			BrakeStrength = math.Remap(Speed, MinSpeed, MaxSpeed, MinBrake, MaxBrake)
 		end
 
+		if IsBraking or (self:GetBrakeEngagement() == 1 and not IsMoving) then -- Braking
+			SetLeft(SelfTbl, "Brake", BrakeStrength) SetRight(SelfTbl, "Brake", BrakeStrength)
+			SetLeft(SelfTbl, "Clutch", CLUTCH_BLOCK) SetRight(SelfTbl, "Clutch", CLUTCH_BLOCK)
+			SetLatches(SelfTbl, true)
+			return
+		end
+
 		if not ShouldSteer then
 			-- Tank steering
-			if IsBraking or (self:GetBrakeEngagement() == 1 and not IsMoving) then -- Braking
-				SetLeft(SelfTbl, "Brake", BrakeStrength) SetRight(SelfTbl, "Brake", BrakeStrength)
-				SetLeft(SelfTbl, "Clutch", CLUTCH_BLOCK) SetRight(SelfTbl, "Clutch", CLUTCH_BLOCK)
-				SetLatches(SelfTbl, true)
-				return
-			end
-
 			SetLatches(SelfTbl, false)
 			if IsNeutral and ShouldNeutral then -- Neutral steering, gears follow A/D
 				SetLeft(SelfTbl, "Brake", 0) SetRight(SelfTbl, "Brake", 0)
 				SetLeft(SelfTbl, "Clutch", CLUTCH_FLOW) SetRight(SelfTbl, "Clutch", CLUTCH_FLOW)
 				SetLeft(SelfTbl, "Gear", A and 2 or 1, true) SetRight(SelfTbl, "Gear", D and 2 or 1, true)
-			else -- Normal driving, gears follow W/S
+			else
+				-- Normal driving, gears follow W/S
 				local TransferGear = (W and 1) or (S and 2) or (A and 1) or (D and 1) or 0
 				if ShouldNeutral then SetBoth(SelfTbl, "Gear", TransferGear) end
 
@@ -239,12 +241,6 @@ do
 			end
 		else
 			-- Car steering
-			if IsBraking or (self:GetBrakeEngagement() == 1 and not IsMoving) then -- Braking
-				SetLeft(SelfTbl, "Brake", BrakeStrength) SetRight(SelfTbl, "Brake", BrakeStrength)
-				SetLeft(SelfTbl, "Clutch", CLUTCH_BLOCK) SetRight(SelfTbl, "Clutch", CLUTCH_BLOCK)
-				SetLatches(SelfTbl, true)
-				return
-			end
 			SetLeft(SelfTbl, "Brake", 0) SetRight(SelfTbl, "Brake", 0)
 			SetLeft(SelfTbl, "Clutch", CLUTCH_FLOW) SetRight(SelfTbl, "Clutch", CLUTCH_FLOW)
 			SetLatches(SelfTbl, false) -- Revert braking if not braking
@@ -291,7 +287,7 @@ do
 		elseif RPM < MaxRPM then Gear = Gear - 1 end
 
 		-- Clean this up later
-		local ShouldNeutral = self.CanNeutral and not self:GetForceSteer()
+		local ShouldNeutral = self.CanNeutral and not self:GetForceCarSteering()
 		local TrueGear = 0
 		if S and not ShouldNeutral then
 			Gear = math.Clamp(Gear, 0, #self.ReverseGears)
