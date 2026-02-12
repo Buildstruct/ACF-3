@@ -171,7 +171,7 @@ do
 
 		for Wheel in pairs(self.Wheels) do self.SteerAngles[Wheel] = 0 end
 
-		if self.Gearbox.DoubleDiff then self.CanNeutral = true end
+		-- if self.Gearbox.DoubleDiff then self.CanNeutral = true end
 
 		self.LastInputs = {}
 		self.LastGear = 0
@@ -225,7 +225,8 @@ do
 		if not ShouldSteer then
 			-- Tank steering
 			SetLatches(SelfTbl, false)
-			if IsNeutral and ShouldNeutral then -- Neutral steering, gears follow A/D
+			if IsNeutral and ShouldNeutral then
+				-- Neutral steering, gears follow A/D
 				SetLeft(SelfTbl, "Brake", 0) SetRight(SelfTbl, "Brake", 0)
 				SetLeft(SelfTbl, "Clutch", CLUTCH_FLOW) SetRight(SelfTbl, "Clutch", CLUTCH_FLOW)
 				SetLeft(SelfTbl, "Gear", A and 2 or 1, true) SetRight(SelfTbl, "Gear", D and 2 or 1, true)
