@@ -67,7 +67,7 @@ do -- Generic Spawner/Linker operation creator
 			if Result.ACF_PostMenuSpawn then
 				Result:ACF_PostMenuSpawn(Trace)
 			else
-				Result:DropToFloor()
+				ACF.DropToFloor(Result)
 			end
 			Result:SetSpawnEffect(true)
 
