@@ -259,6 +259,9 @@ return function(State)
             DrawPictograph(Material, AmmoCount, Font, ax, ay, Scale, Lighting, Col, shade)
         end
 
+        local ColData2 = State.MyController:GetHUDColor2()
+        if ColData2 == Vector() then ColData2 = Vector(0, 1, 1) end
+
         for Receiver, Data in pairs(State.MyController.ReceiverData or {}) do
             if not IsValid(Receiver) then continue end
             local Direction, Time = Data[1], Data[2]
@@ -268,7 +271,7 @@ return function(State)
                 local HitPos = ranger( RP, Direction:GetNormalized(), 99999, State.MyFilter )
                 local SP1 = RP:ToScreen()
                 local SP2 = HitPos:ToScreen()
-                SetDrawColor(cyan.r, cyan.g, cyan.b, (1 - Frac) * 255)
+                SetDrawColor(ColData2.x * 255, ColData2.y * 255, ColData2.z * 255, (1 - Frac) * 255)
                 DrawLine(SP1.x, SP1.y, SP2.x, SP2.y)
             end
         end

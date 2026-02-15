@@ -37,6 +37,7 @@ function ENT:SetupDataTables()
 	self:NetworkVar( "Int", "HUDType", { KeyName = "hudtype", Edit = { type = "Combo", order = 40, category = "HUD Settings", values = {Minimal = 0, Simple = 1}, tooltip = "HUD style" } } )
 	self:NetworkVar( "Float", "HUDScale", { KeyName = "hudscale", Edit = { type = "Float", order = 41, category = "HUD Settings", min = 0, max = 3, tooltip = "HUD scale" } } )
 	self:NetworkVar( "Vector", "HUDColor", { KeyName = "hudcolor", Edit = { type = "VectorColor", order = 42, category = "HUD Settings", tooltip = "HUD color" } } )
+	self:NetworkVar( "Vector", "HUDColor2", { KeyName = "hudcolor2", Edit = { type = "VectorColor", order = 43, category = "HUD Settings", tooltip = "HUD color 2 (for peripherals)" } } )
 
 	self:NetworkVar( "Int", "ThrottleIdle", { KeyName = "throttleidle", Edit = { type = "Int", order = 60, category = "Drivetrain Settings", min = 0, max = 100, tooltip = "If nonzero, engines are throttled to this value forever" } } )
 	self:NetworkVar( "Int", "SpeedUnit", { KeyName = "speedunit", Edit = { type = "Combo", order = 61, category = "Drivetrain Settings", values = {KPH = 0, MPH = 1}, tooltip = "Unit speed should be displayed in" } } )
