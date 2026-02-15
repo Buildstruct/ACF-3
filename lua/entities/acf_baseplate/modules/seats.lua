@@ -76,13 +76,13 @@ local function ShowHidePhysicalEntities(Contraption, NoDraw)
 end
 
 hook.Add("PlayerEnteredVehicle", "ACFHidePhysicalEntities", function(Ply, Veh)
-	if Veh.GetContraption then
+	if Veh.GetContraption and IsValid(Veh:GetContraption()) then
 		ShowHidePhysicalEntities(Veh:GetContraption(), true)
 	end
 end)
 
 hook.Add("PlayerLeaveVehicle", "ACFHidePhysicalEntities", function(Ply, Veh)
-	if Veh.GetContraption then
+	if Veh.GetContraption and IsValid(Veh:GetContraption()) then
 		ShowHidePhysicalEntities(Veh:GetContraption(), false)
 	end
 end)
