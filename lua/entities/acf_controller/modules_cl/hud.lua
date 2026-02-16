@@ -146,7 +146,6 @@ return function(State)
     end
 
     -- HUD RELATED
-    local cyan = Color(0, 255, 255, 255)
     local white = Color(255, 255, 255, 255)
     local dimmed = Color(150, 150, 150, 255)
     local shade = Color(0, 0, 0, 200)

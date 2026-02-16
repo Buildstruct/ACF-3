@@ -14,7 +14,6 @@ do
 		Entity.CamOrbit = Entity["GetCam" .. CamMode .. "Orbit"]()
 		Entity.CamParent = Entity["GetCam" .. CamMode .. "Parent"]()
 		if not IsValid(Entity.CamParent) then Entity.CamParent = Entity end
-		print("Camera Info Received:", Entity.CamMode, Entity.CamOffset, Entity.CamOrbit, Entity.CamParent)
 	end)
 
 	net.Receive("ACF_Controller_CamData", function(_, ply)
