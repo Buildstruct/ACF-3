@@ -242,17 +242,19 @@ end
 do
 	function ENT:ProcessReceivers(SelfTbl)
 		for Receiver, _ in pairs(SelfTbl.Receivers) do
-			local Detected = Receiver.Outputs.Detected.Value
-			local Direction = Receiver.Outputs.Direction.Value
-			if IsValid(Receiver) and (SelfTbl.ReceiverDetecteds[Receiver] ~= Detected or SelfTbl.ReceiverDirections[Receiver] ~= Direction) then
-				SelfTbl.ReceiverDirections[Receiver] = Direction
-				SelfTbl.ReceiverDetecteds[Receiver] = Detected
-				if Detected == 0 then return end
-				net.Start("ACF_Controller_Receivers")
-				net.WriteEntity(self)
-				net.WriteEntity(Receiver)
-				net.WriteVector(Direction)
-				net.Send(self.Driver)
+			if IsValid(Receiver) then
+				local Detected = Receiver.Outputs.Detected.Value
+				local Direction = Receiver.Outputs.Direction.Value
+				if (SelfTbl.ReceiverDetecteds[Receiver] ~= Detected or SelfTbl.ReceiverDirections[Receiver] ~= Direction) then
+					SelfTbl.ReceiverDirections[Receiver] = Direction
+					SelfTbl.ReceiverDetecteds[Receiver] = Detected
+					if Detected == 0 then return end
+					net.Start("ACF_Controller_Receivers")
+					net.WriteEntity(self)
+					net.WriteEntity(Receiver)
+					net.WriteVector(Direction)
+					net.Send(self.Driver)
+				end
 			end
 		end
 	end
