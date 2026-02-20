@@ -4,7 +4,7 @@ local Damage    = ACF.Damage
 local Debug		= ACF.Debug
 local AmmoTypes = Classes.AmmoTypes
 local Ammo      = AmmoTypes.Register("HEAT", "AP")
-local Clock 	= ACF.Clock
+local Clock 	= ACF.Utilities.Clock
 
 function Ammo:OnLoaded()
 	Ammo.BaseClass.OnLoaded(self)
