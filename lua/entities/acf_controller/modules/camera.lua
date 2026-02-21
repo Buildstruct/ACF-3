@@ -12,6 +12,7 @@ do
 		Entity.CamMode = math.Clamp(CamMode, 1, Entity:GetCamCount())
 		Entity.CamOffset = Entity["GetCam" .. CamMode .. "Offset"]()
 		Entity.CamOrbit = Entity["GetCam" .. CamMode .. "Orbit"]()
+		Entity.CamParent = Entity["GetCam" .. CamMode .. "Parent"]()
 	end)
 
 	net.Receive("ACF_Controller_CamData", function(_, ply)
@@ -43,7 +44,8 @@ do
 
 		local CamDir = CamAng:Forward()
 		local CamOffset = SelfTbl.CamOffset or vector_origin
-		local CamPos = self:LocalToWorld(CamOffset)
+		local CamParent = IsValid(SelfTbl.CamParent) and SelfTbl.CamParent or self
+		local CamPos = CamParent:LocalToWorld(CamOffset)
 
 		-- debugoverlay.Line(CamPos, CamPos + CamDir * 100, 0.1, Color(255, 0, 0), true)
 
@@ -75,5 +77,6 @@ do
 			end
 		end
 		self.Filter = Filter
+		if not IsValid(self.CamParent) then self.CamParent = self end
 	end
 end

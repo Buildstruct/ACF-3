@@ -43,10 +43,6 @@ function ENT:ACF_PostUpdateEntityData(ClientData)
 	ACF.Contraption.SetMass(self, Volume * 250)
 end
 
-function ENT:ACF_PostMenuSpawn()
-	self:DropToFloor()
-end
-
 local MaxDistance = ACF.LinkDistance * ACF.LinkDistance
 
 local function BroadcastEntity(Name, Entity, Entity2, State)
@@ -188,6 +184,8 @@ function ENT:GetReloadEffAuto(Gun, Ammo)
 	self.OverlayErrors.ArmAmmoLOS = TraceResult.Hit and "Autoloader cannot see the ammo\nOf: " .. (tostring(Ammo) or "<INVALID ENTITY???>") .. "\nBlocked by " .. (tostring(TraceResult.Entity) or "<INVALID ENTITY???>") or nil
 	self:UpdateOverlay()
 	if TraceResult.Hit then return 0.000001 end
+
+	self.OverlayErrors.MountPoint = Gun.IsACFRack and table.Count(Gun.MountPoints) ~= 1 and "Autoloader is linked to a rack with\nMultiple mount points, which is unsupported." or nil
 
 	-- Gun to arm
 	local GunMoveOffset = self:WorldToLocal(BreechPos)

@@ -242,17 +242,19 @@ end
 do
 	function ENT:ProcessReceivers(SelfTbl)
 		for Receiver, _ in pairs(SelfTbl.Receivers) do
-			local Detected = Receiver.Outputs.Detected.Value
-			local Direction = Receiver.Outputs.Direction.Value
-			if IsValid(Receiver) and (SelfTbl.ReceiverDetecteds[Receiver] ~= Detected or SelfTbl.ReceiverDirections[Receiver] ~= Direction) then
-				SelfTbl.ReceiverDirections[Receiver] = Direction
-				SelfTbl.ReceiverDetecteds[Receiver] = Detected
-				if Detected == 0 then return end
-				net.Start("ACF_Controller_Receivers")
-				net.WriteEntity(self)
-				net.WriteEntity(Receiver)
-				net.WriteVector(Direction)
-				net.Send(self.Driver)
+			if IsValid(Receiver) then
+				local Detected = Receiver.Outputs.Detected.Value
+				local Direction = Receiver.Outputs.Direction.Value
+				if (SelfTbl.ReceiverDetecteds[Receiver] ~= Detected or SelfTbl.ReceiverDirections[Receiver] ~= Direction) then
+					SelfTbl.ReceiverDirections[Receiver] = Direction
+					SelfTbl.ReceiverDetecteds[Receiver] = Detected
+					if Detected == 0 then return end
+					net.Start("ACF_Controller_Receivers")
+					net.WriteEntity(self)
+					net.WriteEntity(Receiver)
+					net.WriteVector(Direction)
+					net.Send(self.Driver)
+				end
 			end
 		end
 	end
@@ -597,6 +599,12 @@ do
 			end
 		end
 
+		-- Handle camera entity selection
+		local Parent1 = IsValid(self:GetCam1Parent()) and self:GetCam1Parent():EntIndex() or 0
+		local Parent2 = IsValid(self:GetCam2Parent()) and self:GetCam2Parent():EntIndex() or 0
+		local Parent3 = IsValid(self:GetCam3Parent()) and self:GetCam3Parent():EntIndex() or 0
+		duplicator.StoreEntityModifier(self, "CamParents", {Parent1, Parent2, Parent3})
+
 		-- Wire dupe info
 		self.BaseClass.PreEntityCopy(self)
 	end
@@ -615,6 +623,14 @@ do
 				end
 				EntMods[Field] = nil
 			end
+		end
+
+		-- Handle camera parent entities
+		if EntMods.CamParents then
+			self:SetCam1Parent(CreatedEntities[EntMods.CamParents[1]])
+			self:SetCam2Parent(CreatedEntities[EntMods.CamParents[2]])
+			self:SetCam3Parent(CreatedEntities[EntMods.CamParents[3]])
+			EntMods.CamParents = nil
 		end
 
 		--Wire dupe info
