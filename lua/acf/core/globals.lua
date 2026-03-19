@@ -228,7 +228,7 @@ do -- ACF global vars
 		sent_prop2mesh        = true,
 
 		starfall_hologram     = true,
-		starfall_prop         = true,
+		--starfall_prop         = true,
 		starfall_screen       = true,
 		starfall_processor    = true,
 	}
