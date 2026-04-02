@@ -283,20 +283,6 @@ local mouseZoom = 300 -- source units a second
 local lastCalc = CurTime()
 
 local lastAng
-hook.Add("PlayerButtonDown", "ACF_Scanner_BlockInputs", function(_, btn)
-	if EditingSafezone then
-		if btn == KEY_C then
-			gui.EnableScreenClicker(true)
-		end
-		return true
-	end
-end)
-
-hook.Add("PlayerButtonUp", "ACF_Scanner_BlockInputs", function()
-	if EditingSafezone then
-		gui.EnableScreenClicker(false)
-	end
-end)
 local function AddMouseZoom(zoom)
 	mouseZoom = mouseZoom + zoom
 	mouseZoom = math.Clamp(mouseZoom, 50, 1000000)

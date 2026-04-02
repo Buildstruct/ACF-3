@@ -87,14 +87,6 @@ Hooks.Add("ACF_Base_Shared", function(Gamemode)
 	function Gamemode:ACF_OnResizeEntity()
 	end
 
-	--- Called when a player attempts to use the scanner.
-	--- @param Player entity The player attempting to use the scanner.
-	--- @return boolean # False to prevent the player from scanning, otherwise true.
-	--- @return string # A short reason why the player is not allowed to scan. Not required if the player will be allowed to scan.
-	function Gamemode:ACF_PreBeginScanning()
-		return true
-	end
-
 	--- Called just before something attempts to create an effect through ACF.  
 	--- You can either modify the fields of the EffectTable or return an entirely new one.
 	--- @param EffectName string The name of the effect to be created.
