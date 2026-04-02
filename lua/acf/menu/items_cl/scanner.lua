@@ -1,6 +1,9 @@
+if true then return end --just don't run the file
+
 local ACF = ACF
 
 local function CreateMenu(Menu)
+
     Menu:AddTitle("#acf.menu.scanner.menu_title")
 
     local MenuDesc = ""

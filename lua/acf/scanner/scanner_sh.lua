@@ -1,3 +1,5 @@
+if true then return end --just don't run the file
+
 -- This file is NOT DONE: It needs to be split into several files. However, I ran into issues with the ACF loading order, so
 -- it's being pushed in this state until I can do a bit more looking into on how to properly maintain a loading order.
 -- A lot of this code has been optimized/profiled, but there's more work to do in that department...
