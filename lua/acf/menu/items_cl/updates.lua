@@ -28,11 +28,12 @@ local function DrawGitStatus(Menu, ExtensionName, Version, MostRecentCommit)
 
 	-- Note, since we're using the latest commit on the server's branch, the following is possible:
 	-- Server up to date with main, client out of date with dev, but dev is ahead of main.
-	if MostRecentCommit then
+	--if MostRecentCommit then
+	if true then --Our version will always mismatch with the workshop and serve our own files so no need for us to warn about being out of date. - Octo
 		local StatusValue = language.GetPhrase(Outdated and "acf.menu.updates.outdated" or "acf.menu.updates.up_to_date")
 		Status:SetText(StatusPrefix:format(StatusValue))
-	else
-		Status:SetText(StatusPrefix:format("#acf.menu.updates.unknown"))
+	--else
+	--	Status:SetText(StatusPrefix:format("#acf.menu.updates.unknown"))
 	end
 
 	Base:AddLabel(language.GetPhrase("acf.menu.updates.current_branch"):format(Version.head))
