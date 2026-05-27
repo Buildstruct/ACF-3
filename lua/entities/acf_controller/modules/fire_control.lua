@@ -37,12 +37,13 @@ do
 		if not Gun then return end
 
 		local Delay = OverrideDelay or Gun.ReloadTime or 0
+		local Count = table.Count(Guns)
 		local Counter = 0
 		for Gun in pairs(Guns) do
 			local CurrentGun = Gun
 			if CurrentGun.Firing == Fire then continue end -- Don't make a timer if nothing changed
 			CurrentGun.Firing = Fire
-			local TrueDelay = Counter * Delay -- It's called good luck
+			local TrueDelay = Counter * Delay / Count -- It's called good luck
 			TimerSimple(TrueDelay, function()
 				if IsValid(CurrentGun) and Fire then
 					local GunCanFire = CurrentGun.CanFire and CurrentGun:CanFire()
@@ -85,6 +86,7 @@ do
 		local Primary = self.Primary
 		local BreechReference = IsValid(Primary) and Primary.BreechReference
 		local ReloadAngle = self:GetReloadAngle()
+		local ReloadAngleHorizontal = self:GetReloadAngleHorizontal()
 		local ShouldLevel = ReloadAngle ~= 0 and IsValid(Primary) and Primary.State ~= "Loaded"
 
 		-- Liddul... if you can hear me...
@@ -106,7 +108,10 @@ do
 		for Turret, _ in pairs(Turrets) do
 			if IsValid(Turret) then
 				if Turret == BreechReference and ShouldLevel then Turret:InputDirection(ReloadAngle)
+				elseif BreechReference and Turret == BreechReference:GetParent() and ShouldLevel and ReloadAngleHorizontal ~= 0 then Turret:InputDirection(ReloadAngleHorizontal)
 				else Turret:InputDirection(HitPos + AntiDrop + AntiDrift) end
+
+				if Turret == SelfTbl.RadarVertical then Turret:InputDirection(SelfTbl.SelectedTargetPos) end
 			end
 		end
 	end
