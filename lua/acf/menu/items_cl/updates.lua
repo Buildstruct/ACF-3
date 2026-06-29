@@ -8,7 +8,9 @@ local function DrawGitCommit(Menu, Commit)
 	Base:AddTitle(Commit.title or "#acf.menu.updates.commit_title_default")
 	Base:AddLabel(Commit.body or "#acf.menu.updates.commit_message_default")
 	Base:AddLabel(language.GetPhrase("acf.menu.updates.commit_author"):format(Commit.author))
-	Base:AddLabel(language.GetPhrase("acf.menu.updates.commit_date"):format(os.date("%Y-%m-%d %H:%M:%S", Commit.date)))
+	Base:AddLabel(language.GetPhrase("acf.menu.updates.commit_date"):format(
+		os.date("%Y-%m-%d %H:%M:%S", Commit.date) .. " (" .. string.FormattedTime(os.time() - Commit.date, "%dh") .. " ago)"
+	))
 	Base:AddLabel(language.GetPhrase("acf.menu.updates.commit_code"):format(Commit.Code or Commit.code or "#acf.menu.updates.unknown"))
 	local Button = Base:AddButton("#acf.menu.updates.commit_view")
 	function Button:DoClickInternal()
@@ -28,12 +30,16 @@ local function DrawGitStatus(Menu, ExtensionName, Version, MostRecentCommit)
 
 	-- Note, since we're using the latest commit on the server's branch, the following is possible:
 	-- Server up to date with main, client out of date with dev, but dev is ahead of main.
-	--if MostRecentCommit then
-	if true then --Our version will always mismatch with the workshop and serve our own files so no need for us to warn about being out of date. - Octo
+	if MostRecentCommit then
 		local StatusValue = language.GetPhrase(Outdated and "acf.menu.updates.outdated" or "acf.menu.updates.up_to_date")
+		if Outdated and Version.date and Version.date > 0 then
+			local Diff      = MostRecentCommit.date - Version.date
+			local Direction = Diff >= 0 and "behind" or "ahead"
+			StatusValue     = StatusValue .. " (" .. string.FormattedTime(math.abs(Diff), "%dh") .. " " .. Direction .. ")"
+		end
 		Status:SetText(StatusPrefix:format(StatusValue))
-	--else
-	--	Status:SetText(StatusPrefix:format("#acf.menu.updates.unknown"))
+	else
+		Status:SetText(StatusPrefix:format("#acf.menu.updates.unknown"))
 	end
 
 	Base:AddLabel(language.GetPhrase("acf.menu.updates.current_branch"):format(Version.head))

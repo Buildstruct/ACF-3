@@ -222,9 +222,9 @@ elseif CLIENT then
 					ClientExtension = ACF.Extensions[ExtensionName]
 					ServerExtension = ACF.ServerExtensions[ExtensionName]
 					if not ClientExtension or not ServerExtension or not ClientExtension.Version or not ServerExtension.Commit then continue end -- Why would this happen :(
-					--[[if ClientExtension.Version.code ~= ServerExtension.Commit.code then
+					if ClientExtension.Version.code ~= ServerExtension.Commit.code then
 						Messages.PrintChat("Error", "Your version of " .. ExtensionName .. " is out of date with the latest commit on the server's branch.\nPlease update to avoid potential compatibility issues.")
-					end]]
+					end
 					if ServerExtension.Version.code ~= ServerExtension.Commit.code then
 						Messages.PrintChat("Error", "The server's version of " .. ExtensionName .. " is out of date with the latest commit on its branch.\nPlease notify the server administrator to update to avoid potential compatibility issues.")
 					end
