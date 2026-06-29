@@ -184,7 +184,7 @@ function ACF.AddRepository(Owner, Name)
 	table.insert(ACF.ExtensionOrders, Name)
 end
 
-ACF.AddRepository("Buildstruct", "ACF-3")
+ACF.AddRepository("ACF-Team", "ACF-3")
 
 -- Realm specific stuff (so small it probably doesn't need to be in separate files)
 if SERVER then
