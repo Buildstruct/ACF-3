@@ -184,7 +184,7 @@ function ACF.AddRepository(Owner, Name)
 	table.insert(ACF.ExtensionOrders, Name)
 end
 
-ACF.AddRepository("ACF-Team", "ACF-3")
+ACF.AddRepository("Buildstruct", "ACF-3")
 
 -- Realm specific stuff (so small it probably doesn't need to be in separate files)
 if SERVER then
@@ -200,38 +200,5 @@ if SERVER then
 			end)
 		end
 		hook.Remove("Initialize", "ACF_GetLatestCommit")
-	end)
-
-	-- Retrieve most recent commit and current server commit and network to all clients
-	util.AddNetworkString("ACF_VersionInfo")
-	hook.Add("ACF_OnLoadPlayer", "ACF_SendVersionInfo", function(ply)
-		net.Start("ACF_VersionInfo")
-		net.WriteString(util.TableToJSON(ACF.Extensions or {}))
-		net.Send(ply)
-	end)
-elseif CLIENT then
-	-- Receive version info from server
-	net.Receive("ACF_VersionInfo", function()
-		ACF.ServerExtensions = util.JSONToTable(net.ReadString())
-
-		hook.Add("CreateMove", "ACF Outdated Notice", function(Move)
-			if Move:GetButtons() ~= 0 then
-				-- Determine if client or server versions are out of date with most recent commit and notify.
-				local Messages = ACF.Utilities.Messages
-				for _, ExtensionName in ipairs(ACF.ExtensionOrders) do
-					ClientExtension = ACF.Extensions[ExtensionName]
-					ServerExtension = ACF.ServerExtensions[ExtensionName]
-					if not ClientExtension or not ServerExtension or not ClientExtension.Version or not ServerExtension.Commit then continue end -- Why would this happen :(
-					if ClientExtension.Version.code ~= ServerExtension.Commit.code then
-						Messages.PrintChat("Error", "Your version of " .. ExtensionName .. " is out of date with the latest commit on the server's branch.\nPlease update to avoid potential compatibility issues.")
-					end
-					if ServerExtension.Version.code ~= ServerExtension.Commit.code then
-						Messages.PrintChat("Error", "The server's version of " .. ExtensionName .. " is out of date with the latest commit on its branch.\nPlease notify the server administrator to update to avoid potential compatibility issues.")
-					end
-				end
-
-				hook.Remove("CreateMove", "ACF Outdated Notice")
-			end
-		end)
 	end)
 end
