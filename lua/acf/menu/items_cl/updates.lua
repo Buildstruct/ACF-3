@@ -54,7 +54,7 @@ end
 
 local function CreateMenu(Menu)
 	Menu:AddTitle("#acf.menu.updates.version_status")
-
+--[[
 	for _, ExtensionName in ipairs(ACF.ExtensionOrders) do
 		ClientExtension = ACF.Extensions[ExtensionName]
 		ServerExtension = ACF.ServerExtensions[ExtensionName]
@@ -63,6 +63,7 @@ local function CreateMenu(Menu)
 		DrawGitStatus(Base, ExtensionName, ClientExtension.Version, ServerExtension.Commit)
 		DrawGitStatus(Base, ExtensionName, ServerExtension.Version, ServerExtension.Commit)
 	end
+]]
 end
 
 ACF.AddMenuItem(1, "#acf.menu.about", "#acf.menu.updates", "newspaper", CreateMenu)

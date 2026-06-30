@@ -184,7 +184,7 @@ function ACF.AddRepository(Owner, Name)
 	table.insert(ACF.ExtensionOrders, Name)
 end
 
-ACF.AddRepository("ACF-Team", "ACF-3")
+ACF.AddRepository("Buildstruct", "ACF-3")
 
 -- Realm specific stuff (so small it probably doesn't need to be in separate files)
 if SERVER then
@@ -200,13 +200,5 @@ if SERVER then
 			end)
 		end
 		hook.Remove("Initialize", "ACF_GetLatestCommit")
-	end)
-
-	-- Retrieve most recent commit and current server commit and network to all clients
-	util.AddNetworkString("ACF_VersionInfo")
-	hook.Add("ACF_OnLoadPlayer", "ACF_SendVersionInfo", function(ply)
-		net.Start("ACF_VersionInfo")
-		net.WriteString(util.TableToJSON(ACF.Extensions or {}))
-		net.Send(ply)
 	end)
 end
