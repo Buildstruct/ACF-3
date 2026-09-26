@@ -29,7 +29,7 @@ do
 	function ENT:AnalyzeGuns(Gun)
 		-- Sorts guns into primary, secondary and smoke launchers
 		-- O(n)... heartwarming
-		if Gun.Weapon == "SL" then
+		if Gun.Weapon == "ACF.Guns.SmokeLauncher" then
 			self.GunsSmoke[Gun] = true
 			local Fuse = self:GetSmokeFuse() or 0
 			if Fuse > 0 then Gun:TriggerInput("Fuze", Fuse) end
@@ -103,6 +103,7 @@ do
 		local Turrets = SelfTbl.Turrets
 		if not IsValid(SelfTbl.Baseplate) then return end -- Needed for velocity
 		if SelfTbl.TurretLocked then return end
+		if self:GetDisableAIOCam() then return end -- I guess bro
 
 		local Primary = self.Primary
 		local BreechReference = IsValid(Primary) and Primary.BreechReference
