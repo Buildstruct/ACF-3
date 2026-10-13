@@ -190,7 +190,9 @@ function ACF.UpdateVersionConVars()
 		Packed[#Packed + 1] = table.concat({Repository, Branch, Commit, Workshop}, ",")
 	end
 
-	acf3_versioning:SetString(table.concat(Packed, "|"))
+	if game.IsDedicated() then
+		acf3_versioning:SetString(table.concat(Packed, "|"))
+	end
 end
 
 ACF.Extensions = ACF.Extensions or {}
