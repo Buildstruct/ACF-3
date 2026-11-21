@@ -273,5 +273,4 @@ elseif CLIENT then
 				hook.Remove("CreateMove", "ACF Outdated Notice")
 			end
 		end)
-	end)
-end
+	end
