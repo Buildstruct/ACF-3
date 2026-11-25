@@ -579,6 +579,16 @@ do -- Native type verification functions
 	end
 end
 
+do -- Numerical validation functions
+	function ACF.IsNumberFinite(Value)
+		return Value == Value and Value ~= math.huge and Value ~= -math.huge
+	end
+
+	function ACF.IsNumberNaN(Value)
+		return Value ~= Value
+	end
+end
+
 do -- Hitbox storing and retrieval functions
 	ACF.Hitboxes = ACF.Hitboxes or {}
 
@@ -968,6 +978,18 @@ do -- Crew related
 		return Sum, Count
 	end
 
+	--- Re-rates every crew linked to Entity at once, for when what Entity asks of them changes.
+	--- Server only.
+	--- @param Entity entity The entity the crew are linked to
+	function ACF.RefreshLinkedCrews(Entity)
+		local Crews = Entity.Crews
+		if not Crews then return end
+
+		for Crew in pairs(Crews) do
+			if IsValid(Crew) then Crew:UpdateHighFreq() end
+		end
+	end
+
 	--- Normalizes a value from [inMin,inMax] to [0,1]
 	--- Values outside the input range are clamped to the output range
 	--- @param Value number The value to normalize
@@ -1179,8 +1201,8 @@ do -- Crew related
 	function ACF.FindLongestBullet(Gun)
 		local LongestLength = 0
 		local LongestBullet = nil
-		for Crate in pairs(Gun.Crates) do
-			local BulletData = Crate.BulletData
+		for Crate in pairs(Gun:ACF_GetUserVar("Crates") or {}) do
+			local BulletData = Crate.SlotBulletData or Crate.BulletData
 			local Length = BulletData.RoundLength or (BulletData.PropLength + BulletData.ProjLength)
 			if Length > LongestLength then
 				LongestLength = Length
@@ -1517,5 +1539,31 @@ do
 		Entity:SetGroundEntity(Trace.Entity)
 
 		return 1
+	end
+end
+
+do -- Entity references in net messages
+	-- Creation IDs go up to 10,000,000 before resetting to 0
+	local CREATION_ID_BITS = 24
+
+	--- Writes an entity along with its creation ID, for ACF.ReadEntity.
+	--- @param Entity Entity The entity to write
+	function ACF.WriteEntity(Entity)
+		local Valid = IsValid(Entity)
+
+		net.WriteEntity(Entity)
+		net.WriteUInt(Valid and Entity:GetCreationID() or 0, CREATION_ID_BITS)
+	end
+
+	--- Reads an entity written by ACF.WriteEntity.
+	--- Returns nil if the entity at that index here isn't the one that was sent, like when the index got reused.
+	--- @return Entity? # The entity, or nil
+	function ACF.ReadEntity()
+		local Entity     = net.ReadEntity()
+		local CreationID = net.ReadUInt(CREATION_ID_BITS)
+
+		if not IsValid(Entity) or Entity:GetCreationID() ~= CreationID then return end
+
+		return Entity
 	end
 end

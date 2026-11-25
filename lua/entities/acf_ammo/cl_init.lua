@@ -1,7 +1,7 @@
 local ACF = ACF
 
 include( "shared.lua" )
-include( "modules_cl/round_counts.lua" )
+include( "modules/tool_picker.lua" )
 
 killicon.Add( "acf_ammo", "HUD/killicons/acf_ammo", ACF.KillIconColor )
 
@@ -274,8 +274,8 @@ do --MARK: Networking
 	end
 
 	net.Receive( "ACF_RequestAmmoData", function()
-		local entity = net.ReadEntity()
-		if not IsValid( entity ) then return end
+		local entity = ACF.ReadEntity()
+		if not entity then return end
 
 		entity.HasData = net.ReadBool()
 
@@ -325,16 +325,11 @@ do --MARK: Networking
 		-- Each kind of round top first
 		local kinds = {}
 
-		entity.RoundMixVersion = net.ReadUInt( entity.MixVersionBits )
-
 		for index = 1, net.ReadUInt( ACF.ProfileBits ) + 1 do
 			kinds[index] = {
 				Bodygroup = net.ReadUInt( 4 ),
-				Target    = net.ReadUInt( entity.CountBits ),
 				Name      = net.ReadString(),
 				Icon      = net.ReadString(),
-				ProjMass  = net.ReadFloat(),
-				MuzzleVel = net.ReadFloat(),
 			}
 		end
 
@@ -451,6 +446,8 @@ do --MARK: Networking
 			updateAmmoCount( self )
 		end, "Ammo Crate " .. self:EntIndex() )
 
+		self:RequestAmmoData()
+
 		self.BaseClass.Initialize( self )
 	end
 
@@ -460,13 +457,13 @@ do --MARK: Networking
 		Queued[self] = true
 
 		net.Start( "ACF_RequestAmmoData" )
-			net.WriteEntity( self )
+			ACF.WriteEntity( self )
 		net.SendToServer()
 	end
 
 	function ENT:OnFullUpdate()
 		net.Start( "ACF_RequestAmmoData" )
-			net.WriteEntity( self )
+			ACF.WriteEntity( self )
 		net.SendToServer()
 	end
 end
